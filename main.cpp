@@ -1,4 +1,5 @@
 #include<Windows.h>
+
 int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR,_In_ int ){
 
 	OutputDebugStringA("Hello,DirectX!\n");
@@ -6,3 +7,5 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR,_In_ int ){
 
 	return 0;
 }
+
+
