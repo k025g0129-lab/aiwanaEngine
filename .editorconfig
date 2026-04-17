@@ -10,3 +10,4 @@ spelling_languages = en_US
 spelling_use_default_exclusion_dictionary = true
 
 spelling_exclusion_path = ./exclusion.dic
+
