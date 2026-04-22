@@ -2,10 +2,8 @@
 #include<cstdint>
 #include<string>
 #include<format>
-#include<filesystem>
-#include<fstream>
-#include<chrono>
-
+#include "DebugLog.h"
+#include "DebugLogMacro.h"
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 
@@ -22,12 +20,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 }
 
 
-void Log(std::ostream& os, const std::string& message) {
-
-	os << message << std::endl;
-	OutputDebugStringA(message.c_str());
-
-}
 
 
 //デバック?のテキスト用
@@ -110,22 +102,14 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR,_In_ int ){
 
 
 	//デバック
+	
+	DebugLog::Initialize();
+
 	int a = 10;
+	LOG("enemyHp = {}",a);
 
-	//Log(,ConvertString(std::format(L"enemyHp:{},texturePath:{}\n",a,a)));
-
-	//デバックログ
-	std::filesystem::create_directory("logs");
-
-	//後に関数化予定
-	std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-	std::chrono::time_point < std::chrono::system_clock, std::chrono::seconds > nowSeconds = std::chrono::time_point_cast<std::chrono::seconds>(now);
-	std::chrono::zoned_time localTime{std::chrono::current_zone(),nowSeconds };
-	std::string dateString = std::format("{:%Y%m%d_%H%M%S}",localTime);
-	std::string logFilePath = std::string("logs/") + dateString + ".log";
-	std::ofstream logStream(logFilePath);
-	Log(logStream, ConvertString(std::format(L"enemyHp:{},texturePath:{}\n", a, a)));
-
+	DebugLog::Shutdown();
+	
 	return 0;
 }
 
