@@ -88,23 +88,6 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR,_In_ int ){
 	
 	ShowWindow(hwnd, SW_SHOW);
 
-
-	//OutputDebugStringA("Hello,DirectX!\n");
-	//ウィンドウのバツボタン
-	MSG msg{};
-	while (msg.message != WM_QUIT){
-		if (PeekMessage(&msg,NULL,0,0,PM_REMOVE)){
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
-		else {
-
-
-		}
-
-	}
-
-
 	//デバック
 	DebugLog::Initialize();
 
@@ -147,6 +130,23 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR,_In_ int ){
 
 	assert(device != nullptr);
 	LOG("Complete create D3D12Device!!!");
+
+	//OutputDebugStringA("Hello,DirectX!\n");
+	//メインループ
+	MSG msg{};
+	while (msg.message != WM_QUIT){
+		if (PeekMessage(&msg,NULL,0,0,PM_REMOVE)){
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+		else {
+
+
+		}
+
+	}
+
+
 
 	DebugLog::Shutdown();
 	return 0;
