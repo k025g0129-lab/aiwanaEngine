@@ -54,7 +54,7 @@ std::string ConvertString(const std::wstring& str) {
 	return result;
 }
 
-int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR,_In_ int ){	
+int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	//ウィンドウ設定
 	WNDCLASS wc{};
@@ -69,7 +69,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR,_In_ int ){
 	const int32_t kClientHeight = 720;
 
 	RECT wrc = { 0,0,kClientWidth ,kClientHeight };
-	AdjustWindowRect(&wrc,WS_OVERLAPPEDWINDOW,false);
+	AdjustWindowRect(&wrc, WS_OVERLAPPEDWINDOW, false);
 
 	HWND hwnd = CreateWindow(
 		wc.lpszClassName,
@@ -83,17 +83,59 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR,_In_ int ){
 		nullptr,
 		wc.hInstance,
 		nullptr,
-		
-	);
-	
+
+		);
+
 	ShowWindow(hwnd, SW_SHOW);
 
+	//デバック
+	DebugLog::Initialize();
+
+	int a = 10;
+	LOG("enemyHp = {}", a);
+
+
+
+	//なんか必要らしい、なんやろね
+	IDXGIFactory7* dxgiFactory = nullptr;
+	HRESULT hr = CreateDXGIFactory(IID_PPV_ARGS(&dxgiFactory));
+	assert(SUCCEEDED(hr));
+
+	IDXGIAdapter4* useAdapter = nullptr;
+	for (UINT i = 0; dxgiFactory->EnumAdapterByGpuPreference(i, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&useAdapter)) != DXGI_ERROR_NOT_FOUND; i++) {
+		DXGI_ADAPTER_DESC3 adapterDesc{};
+		hr = useAdapter->GetDesc3(&adapterDesc);
+		assert(SUCCEEDED(hr));
+		if (!(adapterDesc.Flags & DXGI_ADAPTER_FLAG3_SOFTWARE)) {
+			LOG("Use Adapater:{}", ConvertString(adapterDesc.Description));
+			break;
+		}
+		useAdapter = nullptr;
+	}
+	assert(useAdapter != nullptr);
+
+	//上と同じく
+	ID3D12Device* device = nullptr;
+	D3D_FEATURE_LEVEL featureLevels[] = { D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1 ,D3D_FEATURE_LEVEL_12_0 };
+	const char* featureLevelStrings[] = { "12.2","12.1","12.0" };
+	for (size_t i = 0; i < _countof(featureLevels); i++) {
+		hr = D3D12CreateDevice(useAdapter, featureLevels[i], IID_PPV_ARGS(&device));
+
+		if (SUCCEEDED(hr)) {
+			LOG("FeatureLevel : {}", featureLevelStrings[i]);
+			break;
+		}
+
+	}
+
+	assert(device != nullptr);
+	LOG("Complete create D3D12Device!!!");
 
 	//OutputDebugStringA("Hello,DirectX!\n");
-	//ウィンドウのバツボタン
+	//メインループ
 	MSG msg{};
-	while (msg.message != WM_QUIT){
-		if (PeekMessage(&msg,NULL,0,0,PM_REMOVE)){
+	while (msg.message != WM_QUIT) {
+		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
@@ -105,48 +147,6 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR,_In_ int ){
 	}
 
 
-	//デバック
-	DebugLog::Initialize();
-
-	int a = 10;
-	LOG("enemyHp = {}",a);
-
-
-
-	//なんか必要らしい、なんやろね
-	IDXGIFactory7* dxgiFactory = nullptr;
-	HRESULT hr = CreateDXGIFactory(IID_PPV_ARGS(&dxgiFactory));
-	assert(SUCCEEDED(hr));
-
-	IDXGIAdapter4* useAdapter = nullptr;
-	for (UINT i = 0; dxgiFactory->EnumAdapterByGpuPreference(i,DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,IID_PPV_ARGS(&useAdapter)) != DXGI_ERROR_NOT_FOUND; i++){
-		DXGI_ADAPTER_DESC3 adapterDesc{};
-		hr = useAdapter->GetDesc3(&adapterDesc);
-		assert(SUCCEEDED(hr));
-		if (!(adapterDesc.Flags & DXGI_ADAPTER_FLAG3_SOFTWARE)){
-			LOG("Use Adapater:{}", ConvertString(adapterDesc.Description));
-			break;
-		}
-		useAdapter = nullptr;
-	}
-	assert(useAdapter != nullptr);
-
-	//上と同じく
-	ID3D12Device* device = nullptr;
-	D3D_FEATURE_LEVEL featureLevels[] = {D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1 ,D3D_FEATURE_LEVEL_12_0};
-	const char* featureLevelStrings[] = {"12.2","12.1","12.0"};
-	for (size_t i = 0; i < _countof(featureLevels); i++){
-		hr = D3D12CreateDevice(useAdapter, featureLevels[i], IID_PPV_ARGS(&device));
-
-		if (SUCCEEDED(hr)){
-			LOG("FeatureLevel : {}",featureLevelStrings[i]);
-			break;
-		}
-
-	}
-
-	assert(device != nullptr);
-	LOG("Complete create D3D12Device!!!");
 
 	DebugLog::Shutdown();
 	return 0;
