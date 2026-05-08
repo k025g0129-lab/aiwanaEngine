@@ -364,3 +364,7 @@ DirectXGame/imgui.ini
 # debag
 *.log
 /logs
+
+# Dump
+*.dmp
+Dumps/

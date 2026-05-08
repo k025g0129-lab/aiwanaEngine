@@ -7,11 +7,14 @@
 #include<cassert>
 #include "DebugLog.h"
 #include "DebugLogMacro.h"
+#include <dbghelp.h>
+#include<strsafe.h>
 
+#pragma comment(lib,"dbghelp.lib")
 #pragma comment(lib,"d3d12.lib")
 #pragma comment(lib,"dxgi.lib")
 
-
+//ウィンドウ作成
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 
 	switch (msg) {
@@ -26,6 +29,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 
 }
 
+
+//デバック用文字関数
 std::wstring ConvertString(const std::string& str) {
 	if (str.empty()) {
 		return std::wstring();
@@ -54,7 +59,39 @@ std::string ConvertString(const std::wstring& str) {
 	return result;
 }
 
+//SEH...?らしい
+static LONG WINAPI ExportDump(EXCEPTION_POINTERS * exception) {
+
+	SYSTEMTIME time;
+	GetLocalTime(&time);
+	wchar_t filePath[MAX_PATH] = { 0 };
+	CreateDirectory(L"./Dumps", nullptr);
+	StringCchPrintfW(filePath, MAX_PATH, L"./Dumps/%04d-%02d%02d-%02d%02d.dmp", time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute);
+	HANDLE dumpFileHandle = CreateFile(filePath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_WRITE | FILE_SHARE_READ, 0, CREATE_ALWAYS, 0, 0);
+
+	//processId(このexeのId)とクラッシュ(例外)の発生したthreadIdを取得
+	DWORD processId = GetCurrentProcessId();
+	DWORD threadId = GetCurrentThreadId();
+
+	//設定情報を入力
+	MINIDUMP_EXCEPTION_INFORMATION minidumpInformation{ 0 };
+	minidumpInformation.ThreadId = threadId;
+	minidumpInformation.ExceptionPointers = exception;
+	minidumpInformation.ClientPointers = TRUE;
+
+	//Dumpを出力。MiniDumpNormalは最低限の情報を出力するフラグ
+	MiniDumpWriteDump(GetCurrentProcess(), processId, dumpFileHandle, MiniDumpNormal, &minidumpInformation, nullptr, nullptr);
+
+	//他に関連づけられているSEH例外ハンドラがあれば実行。通常はプロセスを終了する
+	return EXCEPTION_EXECUTE_HANDLER;
+}
+
+
+
 int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
+
+	SetUnhandledExceptionFilter(ExportDump);
+
 
 	//ウィンドウ設定
 	WNDCLASS wc{};
@@ -82,7 +119,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		nullptr,
 		nullptr,
 		wc.hInstance,
-		nullptr,
+		nullptr
 
 		);
 
@@ -107,7 +144,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		hr = useAdapter->GetDesc3(&adapterDesc);
 		assert(SUCCEEDED(hr));
 		if (!(adapterDesc.Flags & DXGI_ADAPTER_FLAG3_SOFTWARE)) {
-			LOG("Use Adapater:{}", ConvertString(adapterDesc.Description));
+			LOG("Use Adapter:{}",ConvertString(adapterDesc.Description));
 			break;
 		}
 		useAdapter = nullptr;
@@ -130,6 +167,10 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	assert(device != nullptr);
 	LOG("Complete create D3D12Device!!!");
+
+	uint32_t* p = nullptr;
+	*p = 100;
+
 
 	//OutputDebugStringA("Hello,DirectX!\n");
 	//メインループ
