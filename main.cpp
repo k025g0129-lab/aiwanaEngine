@@ -10,6 +10,8 @@
 #include <dbghelp.h>
 #include<strsafe.h>
 
+
+
 #pragma comment(lib,"dbghelp.lib")
 #pragma comment(lib,"d3d12.lib")
 #pragma comment(lib,"dxgi.lib")
@@ -132,6 +134,19 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	LOG("enemyHp = {}", a);
 
 
+	//デバックレイヤー
+	#ifdef _DEBUG
+	ID3D12Debug1* debugController = nullptr;
+	if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)))) {
+		//レイヤー有効にする
+		debugController->EnableDebugLayer();
+
+		//GPUでもチェックする
+		debugController->SetEnableGPUBasedValidation(TRUE);
+
+	}
+
+	#endif
 
 	//なんか必要らしい、なんやろね
 	IDXGIFactory7* dxgiFactory = nullptr;
@@ -167,6 +182,36 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	assert(device != nullptr);
 	LOG("Complete create D3D12Device!!!");
+
+	#ifdef _DEBUG
+	
+	ID3D12InfoQueue* infoQueue = nullptr;
+	if (SUCCEEDED(device->QueryInterface(IID_PPV_ARGS(&infoQueue)))) {
+
+		//やばやばエラー時停止
+		infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION,true);
+		//エラー時停止
+		infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
+		//警告時停止
+		infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
+
+		D3D12_MESSAGE_ID denyIds[] = {
+			D3D12_MESSAGE_ID_RESOURCE_BARRIER_MISMATCHING_COMMAND_LIST_TYPE
+		};
+
+		D3D12_MESSAGE_SEVERITY severities[] = { D3D12_MESSAGE_SEVERITY_INFO };
+		D3D12_INFO_QUEUE_FILTER filter{};
+		filter.DenyList.NumIDs = _countof(denyIds);
+		filter.DenyList.pIDList = denyIds;
+		filter.DenyList.NumSeverities = _countof(severities);
+		filter.DenyList.pSeverityList = severities;
+
+		infoQueue->PushStorageFilter(&filter);
+
+		infoQueue->Release();
+	}
+
+	#endif
 
 	//バグらせ用
 	//uint32_t* p = nullptr;
@@ -260,6 +305,8 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	assert(SUCCEEDED(hr));
 
 
+
+
 	//OutputDebugStringA("Hello,DirectX!\n");
 	//メインループ
 	MSG msg{};
@@ -274,8 +321,6 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		}
 
 	}
-
-
 
 	DebugLog::Shutdown();
 	return 0;
