@@ -609,7 +609,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	debugController->Release();
 
 	#endif 
-	CloseHandle(hwnd);
+	CloseWindow(hwnd);
 
 
 
