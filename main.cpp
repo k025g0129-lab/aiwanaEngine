@@ -499,7 +499,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	Vector4* materialData = nullptr;
 
 	vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
-	vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData));
+	materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData));
 
 	vertexData[0] = {-0.5f,-0.5f,0.0f,1.0f};
 	vertexData[1] = {0.0f,0.5f,0.0f,1.0f};
