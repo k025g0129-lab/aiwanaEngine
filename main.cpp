@@ -11,6 +11,7 @@
 #include<strsafe.h>
 #include<dxgidebug.h>
 #include<dxcapi.h>
+#include"function.h"
 
 
 
@@ -20,6 +21,7 @@
 #pragma comment(lib,"dxgi.lib")
 #pragma comment(lib,"dxguid.lib")
 #pragma comment(lib,"dxcompiler.lib")
+
 
 //ウィンドウ作成
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
@@ -35,7 +37,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	return DefWindowProc(hwnd, msg, wparam, lparam);
 
 }
-
 
 //デバック用文字関数
 std::wstring ConvertString(const std::string& str) {
@@ -67,7 +68,7 @@ std::string ConvertString(const std::wstring& str) {
 }
 
 //SEH...?らしい
-static LONG WINAPI ExportDump(EXCEPTION_POINTERS * exception) {
+static LONG WINAPI ExportDump(EXCEPTION_POINTERS* exception) {
 
 	SYSTEMTIME time;
 	GetLocalTime(&time);
@@ -103,7 +104,7 @@ IDxcBlob* CompileShader(
 
 ) {
 	//ファイルを読み込む
-	LOG("Begin CompileShader, path:{},profile:{}\n", ConvertString(filePath), ConvertString(profile) );
+	LOG("Begin CompileShader, path:{},profile:{}\n", ConvertString(filePath), ConvertString(profile));
 	IDxcBlobEncoding* shaderSource = nullptr;
 	HRESULT hr = dxcUtils->LoadFile(filePath.c_str(), nullptr, &shaderSource);
 	assert(SUCCEEDED(hr));
@@ -139,8 +140,8 @@ IDxcBlob* CompileShader(
 	//警告やエラー確認
 	IDxcBlobUtf8* shaderError = nullptr;
 	shaderResult->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&shaderError), nullptr);
-	if (shaderError != nullptr && shaderError->GetStringLength() != 0){
-		LOG("{}",shaderError->GetStringPointer());
+	if (shaderError != nullptr && shaderError->GetStringLength() != 0) {
+		LOG("{}", shaderError->GetStringPointer());
 		assert(false);
 
 	}
@@ -159,9 +160,7 @@ IDxcBlob* CompileShader(
 
 }
 
-struct Vector4{
-	float x, y, z, w;
-};
+
 
 ID3D12Resource* CreateBufferResource(ID3D12Device* device, size_t sizeInBytes) {
 
@@ -191,6 +190,12 @@ ID3D12Resource* CreateBufferResource(ID3D12Device* device, size_t sizeInBytes) {
 
 	return vertexResource;
 };
+
+
+
+
+
+
 
 
 
@@ -412,12 +417,17 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	D3D12_ROOT_SIGNATURE_DESC descriptionRootSignature{};
 	descriptionRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
-	D3D12_ROOT_PARAMETER rootParameters[1] = {};
+	D3D12_ROOT_PARAMETER rootParameters[2] = {};
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	rootParameters[0].Descriptor.ShaderRegister = 0;
+	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+	rootParameters[1].Descriptor.ShaderRegister = 0;
 	descriptionRootSignature.pParameters = rootParameters;
 	descriptionRootSignature.NumParameters = _countof(rootParameters);
+
+
 
 
 	ID3DBlob* signatureBlob = nullptr;
@@ -487,6 +497,10 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	//マテリアル用に変更
 	ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(Vector4) * 3);
 	ID3D12Resource* materialResource = CreateBufferResource(device, sizeof(Vector4));
+	ID3D12Resource* wvpResource = CreateBufferResource(device, sizeof(Matrix4x4));
+
+
+
 
 	//頂点バッファビュー作成
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
@@ -497,15 +511,19 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	//頂点リソースにデータを書き込む
 	Vector4* vertexData = nullptr;
 	Vector4* materialData = nullptr;
+	Matrix4x4* wvpData = nullptr;
 
 	vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
 	materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData));
+	wvpResource->Map(0, nullptr, reinterpret_cast<void**>(&wvpData));
 
 	vertexData[0] = {-0.5f,-0.5f,0.0f,1.0f};
 	vertexData[1] = {0.0f,0.5f,0.0f,1.0f};
 	vertexData[2] = {0.5f,-0.5f,0.0f,1.0f};
 
 	*materialData = Vector4(1.0f, 0.0f, 0.0f, 1.0f);
+
+	*wvpData = MakeIdentity4x4();
 
 
 	//ビューボート
@@ -524,7 +542,17 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	scissorRect.top = 0;
 	scissorRect.bottom = kClientHeight;
 
+	//Transform変数作成
+	TransformSRT transformSRT = { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 
+	//3次元的用変数
+	TransformSRT cameraTransformSRT = { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,-5.0f} };
+	Matrix4x4 worldMatri = MakeAffineMatrix(transformSRT.scale, transformSRT.rotate, transformSRT.translate);
+	Matrix4x4 cameraMatrix = MakeAffineMatrix(transformSRT.scale, transformSRT.rotate, transformSRT.translate);
+	Matrix4x4 viewMatrix = Inverse(cameraMatrix);
+	Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(kClientWidth) / float(kClientHeight), 0.1f, 100.0f);
+	Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatri, Multiply(viewMatrix, projectionMatrix));
+	*wvpData = worldViewProjectionMatrix;
 
 
 	//メインループ
@@ -535,6 +563,12 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			DispatchMessage(&msg);
 		}
 		else {
+
+			transformSRT.rotate.y += 0.03f;
+			worldMatri = MakeAffineMatrix(transformSRT.scale, transformSRT.rotate, transformSRT.translate);
+			*wvpData = worldMatri;
+
+
 			//これから書き込むバックバッファのインデックスを取得
 			UINT backBufferIndex = swapChain->GetCurrentBackBufferIndex();
 
@@ -563,6 +597,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			commandList->SetGraphicsRootConstantBufferView(0,materialResource->GetGPUVirtualAddress());
+			commandList->SetGraphicsRootConstantBufferView(1,wvpResource->GetGPUVirtualAddress());
 
 
 			commandList->DrawInstanced(3, 1, 0, 0);
