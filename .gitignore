@@ -368,3 +368,5 @@ DirectXGame/imgui.ini
 # Dump
 *.dmp
 Dumps/
+
+imgui.ini
