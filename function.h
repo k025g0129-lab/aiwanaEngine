@@ -4,6 +4,10 @@
 #include <cmath> 
 #include <cassert> 
 
+struct Vector2 {
+	float x, y;
+};
+
 struct Vector3 {
 	float x, y, z;
 };
@@ -20,6 +24,12 @@ struct TransformSRT {
 
 struct Matrix4x4 {
 	float m[4][4];
+};
+
+struct VertexData{
+	Vector4 pos;
+	Vector2 texcoord;
+
 };
 
 
