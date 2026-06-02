@@ -648,6 +648,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	*wvpData = MakeIdentity4x4();
 
 
+
 	//ビューボート
 	D3D12_VIEWPORT viewport{};
 	viewport.Width = kClientWidth;
