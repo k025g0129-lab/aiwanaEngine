@@ -991,6 +991,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			}
 
 
+
 			commandList->DrawInstanced(3, 1, 0, 0);
 
 			//2D
