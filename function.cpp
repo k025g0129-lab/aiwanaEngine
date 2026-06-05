@@ -245,3 +245,26 @@ Matrix4x4 MakePerspectiveFovMatrix(float fovY, float aspectRatio, float nearClip
 
 	return re;
 }
+
+Matrix4x4 MakeOrthographicMatrix(float left, float top, float right, float bottom, float nearClip, float farClip){
+
+	Matrix4x4 re;
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			re.m[i][j] = 0.0f;
+		}
+	}
+	re.m[3][3] = 1.0f;
+
+
+	re.m[0][0] = 2.0f / (right - left);
+	re.m[1][1] = 2.0f / (top - bottom);
+	re.m[2][2] = 1.0f / (farClip - nearClip);
+	re.m[3][0] = (left + right) / (left - right);
+	re.m[3][1] = (top + bottom) / (bottom - top);
+	re.m[3][2] = nearClip / (nearClip - farClip);
+
+
+
+	return re;
+}
