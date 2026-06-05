@@ -503,7 +503,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	ID3D12DescriptorHeap* rtvDescriptorHeap = CreateDescriptorHeap(device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2, false);
 
 	//ImGui用生成
-	ID3D12DescriptorHeap* srvDescriptorHeap = CreateDescriptorHeap(device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 3, true);
+	ID3D12DescriptorHeap* srvDescriptorHeap = CreateDescriptorHeap(device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 10, true);
 
 	//DSV用
 	ID3D12DescriptorHeap* dsvDescriptorHeap = CreateDescriptorHeap(device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1, false);
@@ -696,7 +696,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	//頂点リソースにデータを書き込む
 	VertexData* vertexData = nullptr;
-	Vector4* materialData = nullptr;
+	Color* materialData = nullptr;
 	Matrix4x4* wvpData = nullptr;
 
 	vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
@@ -729,7 +729,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	vertexData[5].pos = { 0.5f,-0.5f,-0.5f,1.0f };
 	vertexData[5].texcoord = { 1.0f,1.0f };
 
-	*materialData = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	*materialData = Color(1.0f, 1.0f, 1.0f, 1.0f);
 
 	*wvpData = MakeIdentity4x4();
 
@@ -811,6 +811,11 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	const DirectX::TexMetadata& metadata2 = mipImages2.GetMetadata();
 	ID3D12Resource* textureResource2 = CreateTextureResource(device, metadata2);
 	UploadTextureData(textureResource2, mipImages2);
+
+	DirectX::ScratchImage mipImages3 = LoadTexture("resources/chess-address.png");
+	const DirectX::TexMetadata& metadata3 = mipImages3.GetMetadata();
+	ID3D12Resource* textureResource3 = CreateTextureResource(device, metadata3);
+	UploadTextureData(textureResource3, mipImages3);
 	
 	//SRV設定
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
@@ -826,6 +831,13 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	srvDesc2.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	srvDesc2.Texture2D.MipLevels = UINT(metadata2.mipLevels);
 
+	//3個目
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc3{};
+	srvDesc3.Format = metadata3.format;
+	srvDesc3.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc3.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc3.Texture2D.MipLevels = UINT(metadata3.mipLevels);
+
 
 	const uint32_t desriptorSizeSRV = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	//const uint32_t desriptorSizeRTV = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
@@ -837,8 +849,12 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	D3D12_CPU_DESCRIPTOR_HANDLE textureSrvHandleCPU2 = GetCPUDescriptorHandle(srvDescriptorHeap, desriptorSizeSRV, 2);
 	D3D12_GPU_DESCRIPTOR_HANDLE textureSrvHandleGPU2 = GetGPUDescriptorHandle(srvDescriptorHeap, desriptorSizeSRV, 2);
 
+	D3D12_CPU_DESCRIPTOR_HANDLE textureSrvHandleCPU3 = GetCPUDescriptorHandle(srvDescriptorHeap, desriptorSizeSRV, 3);
+	D3D12_GPU_DESCRIPTOR_HANDLE textureSrvHandleGPU3 = GetGPUDescriptorHandle(srvDescriptorHeap, desriptorSizeSRV, 3);
+
 	device->CreateShaderResourceView(textureResource, &srvDesc, textureSrvHandleCPU);
 	device->CreateShaderResourceView(textureResource2, &srvDesc2, textureSrvHandleCPU2);
+	device->CreateShaderResourceView(textureResource3, &srvDesc3, textureSrvHandleCPU3);
 
 
 	#ifdef USE_IMGUI
@@ -858,7 +874,15 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	ImGuiIO& io = ImGui::GetIO();
 	io.Fonts->Build();
 
-	bool useMonsterBall = true;
+
+	const char* calcItems[] = {
+		"uvChecker.png",
+		"monsterBall.png",
+		"chess-address.png",
+	};
+
+	static int mode = 0;
+
 
 	#endif // USE_IMGUI
 
@@ -880,12 +904,17 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			ImGui::NewFrame();
 
 			ImGui::ShowDemoWindow();
-			ImGui::Checkbox("useMonsterBall", &useMonsterBall);
+			ImGui::ColorEdit3("Color", reinterpret_cast<float*>(materialData));
+			ImGui::DragFloat3("translate", reinterpret_cast<float*>(&transformSRT.translate),0.01f);
+			ImGui::DragFloat3("rotate", reinterpret_cast<float*>(&transformSRT.rotate),0.01f);
+			ImGui::DragFloat3("scale", reinterpret_cast<float*>(&transformSRT.scale),0.01f);
+			ImGui::Combo("Mode", &mode, calcItems, IM_ARRAYSIZE(calcItems));
+
 
 			#endif // USE_IMGUI
 
-
-			transformSRT.rotate.y += 0.01f;
+			
+			
 			worldMatri = MakeAffineMatrix(transformSRT.scale, transformSRT.rotate, transformSRT.translate);
 			*wvpData = worldMatri;
 
@@ -942,14 +971,32 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			commandList->SetGraphicsRootConstantBufferView(1,wvpResource->GetGPUVirtualAddress());
 
 
-			commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? textureSrvHandleGPU2 : textureSrvHandleGPU);
+			switch (mode)
+			{
 
-			commandList->DrawInstanced(6, 1, 0, 0);
+				//uvChecker.png
+				case 0:
+					commandList->SetGraphicsRootDescriptorTable(2,textureSrvHandleGPU);
+					break;
+
+				//monsterBall.png
+				case 1:
+					commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU2);
+					break;
+
+				case 2:
+					commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU3);
+					break;
+
+			}
+
+
+			commandList->DrawInstanced(3, 1, 0, 0);
 
 			//2D
-			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
-			commandList->SetGraphicsRootConstantBufferView(1,transformationMatrixResourceSprite->GetGPUVirtualAddress());
-			commandList->DrawInstanced(6, 1, 0, 0);
+			//commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
+			//commandList->SetGraphicsRootConstantBufferView(1,transformationMatrixResourceSprite->GetGPUVirtualAddress());
+			//commandList->DrawInstanced(6, 1, 0, 0);
 
 
 			#ifdef USE_IMGUI

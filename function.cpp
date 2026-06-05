@@ -1,5 +1,15 @@
 #include "function.h"
 
+unsigned int MakeColor(float r, float g, float b, float a)
+{
+	unsigned int R = (unsigned int)(r * 255.0f);
+	unsigned int G = (unsigned int)(g * 255.0f);
+	unsigned int B = (unsigned int)(b * 255.0f);
+	unsigned int A = (unsigned int)(a * 255.0f);
+
+	return (R << 24) | (G << 16) | (B << 8) | A;
+}
+
 Matrix4x4 Multiply(const Matrix4x4& m1, const Matrix4x4& m2){
 	Matrix4x4 m3;
 
