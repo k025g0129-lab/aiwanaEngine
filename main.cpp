@@ -686,6 +686,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(VertexData) * 6);
 	ID3D12Resource* materialResource = CreateBufferResource(device, sizeof(Vector4));
 	ID3D12Resource* wvpResource = CreateBufferResource(device, sizeof(Matrix4x4));
+	ID3D12Resource* wvpResource2 = CreateBufferResource(device, sizeof(Matrix4x4));
 
 
 	//頂点バッファビュー作成
@@ -698,10 +699,12 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	VertexData* vertexData = nullptr;
 	Color* materialData = nullptr;
 	Matrix4x4* wvpData = nullptr;
+	Matrix4x4* wvpData2 = nullptr;
 
 	vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
 	materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData));
 	wvpResource->Map(0, nullptr, reinterpret_cast<void**>(&wvpData));
+	wvpResource2->Map(0, nullptr, reinterpret_cast<void**>(&wvpData2));
 
 	//1枚目
 	//左下
@@ -784,7 +787,8 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	scissorRect.bottom = kClientHeight;
 
 	//Transform変数作成
-	TransformSRT transformSRT = { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
+	TransformSRT transformSRT = {{1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f}};
+	TransformSRT transformSRT2 = {{1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f}};
 	TransformSRT transformSprite{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 
 	//3次元的用変数
@@ -795,6 +799,14 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(kClientWidth) / float(kClientHeight), 0.1f, 100.0f);
 	Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatri, Multiply(viewMatrix, projectionMatrix));
 	*wvpData = worldViewProjectionMatrix;
+
+	//2個目
+	Matrix4x4 worldMatri2 = MakeAffineMatrix(transformSRT2.scale, transformSRT2.rotate, transformSRT2.translate);
+	Matrix4x4 cameraMatrix2 = MakeAffineMatrix(transformSRT2.scale, transformSRT2.rotate, transformSRT2.translate);
+	Matrix4x4 viewMatrix2 = Inverse(cameraMatrix2);
+	Matrix4x4 projectionMatrix2 = MakePerspectiveFovMatrix(0.45f, float(kClientWidth) / float(kClientHeight), 0.1f, 100.0f);
+	Matrix4x4 worldViewProjectionMatrix2 = Multiply(worldMatri, Multiply(viewMatrix2, projectionMatrix2));
+	*wvpData2 = worldViewProjectionMatrix2;
 
 	Matrix4x4 worldMatriSprite = MakeAffineMatrix(transformSprite.scale, transformSprite.rotate, transformSprite.translate);
 	Matrix4x4 viewMatrixSprite = MakeIdentity4x4();
@@ -882,7 +894,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	};
 
 	static int mode = 0;
-
+	bool secondTriangle = false;
 
 	#endif // USE_IMGUI
 
@@ -904,11 +916,24 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			ImGui::NewFrame();
 
 			ImGui::ShowDemoWindow();
-			ImGui::ColorEdit3("Color", reinterpret_cast<float*>(materialData));
+			ImGui::ColorEdit3("Color", reinterpret_cast<float*>(materialData));	
+			ImGui::Combo("Mode", &mode, calcItems, IM_ARRAYSIZE(calcItems));
+			ImGui::Checkbox("secondTriangle", &secondTriangle);
+
+			ImGui::Begin("triangle");
 			ImGui::DragFloat3("translate", reinterpret_cast<float*>(&transformSRT.translate),0.01f);
 			ImGui::DragFloat3("rotate", reinterpret_cast<float*>(&transformSRT.rotate),0.01f);
 			ImGui::DragFloat3("scale", reinterpret_cast<float*>(&transformSRT.scale),0.01f);
-			ImGui::Combo("Mode", &mode, calcItems, IM_ARRAYSIZE(calcItems));
+			ImGui::End();
+
+			if (secondTriangle){
+				ImGui::Begin("triangle2");
+				ImGui::DragFloat3("translate2", reinterpret_cast<float*>(&transformSRT2.translate), 0.01f);
+				ImGui::DragFloat3("rotate2", reinterpret_cast<float*>(&transformSRT2.rotate), 0.01f);
+				ImGui::DragFloat3("scale2", reinterpret_cast<float*>(&transformSRT2.scale), 0.01f);
+				ImGui::End();
+			}
+
 
 
 			#endif // USE_IMGUI
@@ -918,6 +943,8 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			worldMatri = MakeAffineMatrix(transformSRT.scale, transformSRT.rotate, transformSRT.translate);
 			*wvpData = worldMatri;
 
+			worldMatri2 = MakeAffineMatrix(transformSRT2.scale, transformSRT2.rotate, transformSRT2.translate);
+			*wvpData2 = worldMatri2;
 
 			//これから書き込むバックバッファのインデックスを取得
 			UINT backBufferIndex = swapChain->GetCurrentBackBufferIndex();
@@ -968,8 +995,6 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			commandList->SetGraphicsRootConstantBufferView(0,materialResource->GetGPUVirtualAddress());
-			commandList->SetGraphicsRootConstantBufferView(1,wvpResource->GetGPUVirtualAddress());
-
 
 			switch (mode)
 			{
@@ -990,9 +1015,13 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 			}
 
-
-
+			commandList->SetGraphicsRootConstantBufferView(1,wvpResource->GetGPUVirtualAddress());
 			commandList->DrawInstanced(3, 1, 0, 0);
+
+			commandList->SetGraphicsRootConstantBufferView(1, wvpResource2->GetGPUVirtualAddress());
+			if (secondTriangle)	{
+				commandList->DrawInstanced(3, 1, 3, 0);
+			}
 
 			//2D
 			//commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
