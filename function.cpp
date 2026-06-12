@@ -89,6 +89,19 @@ Matrix4x4 MakeTranslateMatrix(const Vector3& translate){
 	return re;
 }
 
+Matrix4x4 Transpose(const Matrix4x4& m1){
+
+	Matrix4x4 m2;
+
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			m2.m[i][j] = m1.m[j][i];
+		}
+	}
+
+	return m2;
+}
+
 Matrix4x4 MakeScaleMatrix(const Vector3& scale){
 	Matrix4x4 re;
 	for (int i = 0; i < 4; i++) {
@@ -267,4 +280,57 @@ Matrix4x4 MakeOrthographicMatrix(float left, float top, float right, float botto
 
 
 	return re;
+}
+
+void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color){
+
+	const uint32_t kSubdivision = 16;
+	const float kLonEvery = 2.0f * static_cast<float>(M_PI) / static_cast<float>(kSubdivision);
+	const float kLatEvery = static_cast<float>(M_PI) / static_cast<float>(kSubdivision);
+
+	for (uint32_t latIndex = 0; latIndex < kSubdivision; latIndex++) {
+
+		float lat = -static_cast<float>(M_PI) / 2.0f + kLatEvery * latIndex;
+
+		for (uint32_t lonIndex = 0; lonIndex < kSubdivision; lonIndex++) {
+			float lon = lonIndex * kLonEvery;
+
+			Vector3 a, b, c, d;
+			a.x = sphere.center.x + sphere.radius * cosf(lat) * cosf(lon);
+			a.y = sphere.center.y + sphere.radius * sinf(lat);
+			a.z = sphere.center.z + sphere.radius * cosf(lat) * sinf(lon);
+
+			b.x = sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * cosf(lon);
+			b.y = sphere.center.y + sphere.radius * sinf(lat + kLatEvery);
+			b.z = sphere.center.z + sphere.radius * cosf(lat + kLatEvery) * sinf(lon);
+
+			c.x = sphere.center.x + sphere.radius * cosf(lat) * cosf(lon + kLonEvery);
+			c.y = sphere.center.y + sphere.radius * sinf(lat);
+			c.z = sphere.center.z + sphere.radius * cosf(lat) * sinf(lon + kLonEvery);
+
+			d.x = sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * cosf(lon + kLonEvery);
+			d.y = sphere.center.y + sphere.radius * sinf(lat + kLatEvery);
+			d.z = sphere.center.z + sphere.radius * cosf(lat + kLatEvery) * sinf(lon + kLonEvery);
+
+			Matrix4x4 vpv = Multiply(viewProjectionMatrix, viewportMatrix);
+
+			Vector3 as = TransformV3ToM4x4(a, vpv);
+			Vector3 bs = TransformV3ToM4x4(b, vpv);
+			Vector3 cs = TransformV3ToM4x4(c, vpv);
+			Vector3 ds = TransformV3ToM4x4(d, vpv);
+
+			color = color;
+			/*Novice::DrawLine(
+				static_cast<int>(as.x), static_cast<int>(as.y),
+				static_cast<int>(bs.x), static_cast<int>(bs.y),
+				color);
+
+			Novice::DrawLine(
+				static_cast<int>(as.x), static_cast<int>(as.y),
+				static_cast<int>(cs.x), static_cast<int>(cs.y),
+				color);*/
+
+		}
+
+	}
 }

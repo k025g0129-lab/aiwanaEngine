@@ -683,7 +683,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	
 	//マテリアル用に変更
-	ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(VertexData) * 6);
+	ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(VertexData) * 1536);
 	ID3D12Resource* materialResource = CreateBufferResource(device, sizeof(Vector4));
 	ID3D12Resource* wvpResource = CreateBufferResource(device, sizeof(Matrix4x4));
 
@@ -691,7 +691,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	//頂点バッファビュー作成
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
 	vertexBufferView.BufferLocation = vertexResource->GetGPUVirtualAddress();
-	vertexBufferView.SizeInBytes = sizeof(VertexData) * 6;
+	vertexBufferView.SizeInBytes = sizeof(VertexData) *1536;
 	vertexBufferView.StrideInBytes = sizeof(VertexData);
 
 	//頂点リソースにデータを書き込む
@@ -788,9 +788,9 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	TransformSRT transformSprite{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 
 	//3次元的用変数
-	TransformSRT cameraTransformSRT = { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,-5.0f} };
+	TransformSRT cameraTransformSRT = { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,-10.0f} };
 	Matrix4x4 worldMatri = MakeAffineMatrix(transformSRT.scale, transformSRT.rotate, transformSRT.translate);
-	Matrix4x4 cameraMatrix = MakeAffineMatrix(transformSRT.scale, transformSRT.rotate, transformSRT.translate);
+	Matrix4x4 cameraMatrix = MakeAffineMatrix(cameraTransformSRT.scale, cameraTransformSRT.rotate, cameraTransformSRT.translate);
 	Matrix4x4 viewMatrix = Inverse(cameraMatrix);
 	Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(kClientWidth) / float(kClientHeight), 0.1f, 100.0f);
 	Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatri, Multiply(viewMatrix, projectionMatrix));
@@ -840,6 +840,79 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	device->CreateShaderResourceView(textureResource, &srvDesc, textureSrvHandleCPU);
 	device->CreateShaderResourceView(textureResource2, &srvDesc2, textureSrvHandleCPU2);
 
+
+	//球
+
+	Sphere sphere;
+	sphere.center = { 0.0f,0.0f,0.0f };
+	sphere.radius = 1.0f;
+	const uint32_t kSubdivision = 16;
+	const float kLonEvery = 2.0f * static_cast<float>(M_PI) / static_cast<float>(kSubdivision);
+	const float kLatEvery = static_cast<float>(M_PI) / static_cast<float>(kSubdivision);
+
+	for (uint32_t latIndex = 0; latIndex < kSubdivision; latIndex++) {
+
+		float lat = -static_cast<float>(M_PI) / 2.0f + kLatEvery * latIndex;
+
+		for (uint32_t lonIndex = 0; lonIndex < kSubdivision; lonIndex++) {
+
+			uint32_t start = (latIndex * kSubdivision + lonIndex) * 6;
+			float lon = lonIndex * kLonEvery;
+
+			float u0 = float(lonIndex) / float(kSubdivision);
+			float u1 = float(lonIndex + 1) / float(kSubdivision);
+
+			float v0 = 1.0f - float(latIndex) / float(kSubdivision);
+			float v1 = 1.0f - float(latIndex + 1) / float(kSubdivision);
+
+			//1a
+			vertexData[start].pos.x = sphere.center.x + sphere.radius * cosf(lat) * cosf(lon);
+			vertexData[start].pos.y = sphere.center.x + sphere.radius * sinf(lat);
+			vertexData[start].pos.z = sphere.center.x + sphere.radius * cosf(lat) * sinf(lon);
+			vertexData[start].pos.w = 1.0f;
+			vertexData[start].texcoord =  {u0,v0};
+
+			//1b
+			vertexData[start + 1].pos.x = sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * cosf(lon);
+			vertexData[start + 1].pos.y = sphere.center.x + sphere.radius * sinf(lat + kLatEvery);
+			vertexData[start + 1].pos.z = sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * sinf(lon);
+			vertexData[start + 1].pos.w = 1.0f;
+			vertexData[start + 1].texcoord = { u0,v1 };
+
+			//1c
+			vertexData[start + 2].pos.x = sphere.center.x + sphere.radius * cosf(lat) * cosf(lon + kLonEvery);
+			vertexData[start + 2].pos.y = sphere.center.x + sphere.radius * sinf(lat);
+			vertexData[start + 2].pos.z = sphere.center.x + sphere.radius * cosf(lat) * sinf(lon + kLonEvery);
+			vertexData[start + 2].pos.w = 1.0f;
+			vertexData[start + 2].texcoord = { u1,v0 };
+
+			//2b
+			vertexData[start + 3].pos.x = sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * cosf(lon);
+			vertexData[start + 3].pos.y = sphere.center.x + sphere.radius * sinf(lat + kLatEvery);
+			vertexData[start + 3].pos.z = sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * sinf(lon);
+			vertexData[start + 3].pos.w = 1.0f;
+			vertexData[start + 3].texcoord = { u0,v1 };
+
+			//2d
+			vertexData[start + 4].pos.x = sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * cosf(lon + kLonEvery);
+			vertexData[start + 4].pos.y = sphere.center.x + sphere.radius * sinf(lat + kLatEvery);
+			vertexData[start + 4].pos.z = sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * sinf(lon + kLonEvery);
+			vertexData[start + 4].pos.w = 1.0f;
+			vertexData[start + 4].texcoord = { u1,v1 };
+
+			//2c
+			vertexData[start + 5].pos.x = sphere.center.x + sphere.radius * cosf(lat) * cosf(lon + kLonEvery);
+			vertexData[start + 5].pos.y = sphere.center.x + sphere.radius * sinf(lat);
+			vertexData[start + 5].pos.z = sphere.center.x + sphere.radius * cosf(lat) * sinf(lon + kLonEvery);
+			vertexData[start + 5].pos.w = 1.0f;
+			vertexData[start + 5].texcoord = { u1,v0 };
+
+
+
+
+		}
+		
+	}
 
 	#ifdef USE_IMGUI
 
@@ -945,7 +1018,11 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? textureSrvHandleGPU2 : textureSrvHandleGPU);
 
 			commandList->DrawInstanced(6, 1, 0, 0);
-			commandList->SetGraphicsRootDescriptorTable(2,textureSrvHandleGPU2);
+
+			commandList->SetGraphicsRootDescriptorTable(2,textureSrvHandleGPU);
+
+
+			commandList->DrawInstanced(kSubdivision * kSubdivision * 6, 1, 0, 0);
 
 			//2D
 			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);

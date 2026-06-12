@@ -3,6 +3,8 @@
 #include<string>
 #include <cmath> 
 #include <cassert> 
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 struct Vector2 {
 	float x, y;
@@ -32,7 +34,10 @@ struct VertexData{
 
 };
 
-
+struct Sphere {
+	Vector3 center;
+	float radius;
+};
 
 //行列積
 Matrix4x4 Multiply(const Matrix4x4& m1, const Matrix4x4& m2);
@@ -63,3 +68,5 @@ Matrix4x4 MakeAffineMatrix(const Vector3& scale, const Vector3& rotate, const Ve
 Matrix4x4 MakePerspectiveFovMatrix(float fovY, float aspectRatio, float nearClip, float farClip);
 Matrix4x4 MakeOrthographicMatrix(float left, float top, float right, float bottom, float nearClip, float farClip);
 
+
+void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color);
