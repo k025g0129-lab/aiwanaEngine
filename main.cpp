@@ -867,43 +867,43 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 			//1a
 			vertexData[start].pos.x = sphere.center.x + sphere.radius * cosf(lat) * cosf(lon);
-			vertexData[start].pos.y = sphere.center.x + sphere.radius * sinf(lat);
-			vertexData[start].pos.z = sphere.center.x + sphere.radius * cosf(lat) * sinf(lon);
+			vertexData[start].pos.y = sphere.center.y + sphere.radius * sinf(lat);
+			vertexData[start].pos.z = sphere.center.z + sphere.radius * cosf(lat) * sinf(lon);
 			vertexData[start].pos.w = 1.0f;
 			vertexData[start].texcoord =  {u0,v0};
 
 			//1b
 			vertexData[start + 1].pos.x = sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * cosf(lon);
-			vertexData[start + 1].pos.y = sphere.center.x + sphere.radius * sinf(lat + kLatEvery);
-			vertexData[start + 1].pos.z = sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * sinf(lon);
+			vertexData[start + 1].pos.y = sphere.center.y + sphere.radius * sinf(lat + kLatEvery);
+			vertexData[start + 1].pos.z = sphere.center.z + sphere.radius * cosf(lat + kLatEvery) * sinf(lon);
 			vertexData[start + 1].pos.w = 1.0f;
 			vertexData[start + 1].texcoord = { u0,v1 };
 
 			//1c
 			vertexData[start + 2].pos.x = sphere.center.x + sphere.radius * cosf(lat) * cosf(lon + kLonEvery);
-			vertexData[start + 2].pos.y = sphere.center.x + sphere.radius * sinf(lat);
-			vertexData[start + 2].pos.z = sphere.center.x + sphere.radius * cosf(lat) * sinf(lon + kLonEvery);
+			vertexData[start + 2].pos.y = sphere.center.y + sphere.radius * sinf(lat);
+			vertexData[start + 2].pos.z = sphere.center.z + sphere.radius * cosf(lat) * sinf(lon + kLonEvery);
 			vertexData[start + 2].pos.w = 1.0f;
 			vertexData[start + 2].texcoord = { u1,v0 };
 
 			//2b
 			vertexData[start + 3].pos.x = sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * cosf(lon);
-			vertexData[start + 3].pos.y = sphere.center.x + sphere.radius * sinf(lat + kLatEvery);
-			vertexData[start + 3].pos.z = sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * sinf(lon);
+			vertexData[start + 3].pos.y = sphere.center.y + sphere.radius * sinf(lat + kLatEvery);
+			vertexData[start + 3].pos.z = sphere.center.z + sphere.radius * cosf(lat + kLatEvery) * sinf(lon);
 			vertexData[start + 3].pos.w = 1.0f;
 			vertexData[start + 3].texcoord = { u0,v1 };
 
 			//2d
 			vertexData[start + 4].pos.x = sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * cosf(lon + kLonEvery);
-			vertexData[start + 4].pos.y = sphere.center.x + sphere.radius * sinf(lat + kLatEvery);
-			vertexData[start + 4].pos.z = sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * sinf(lon + kLonEvery);
+			vertexData[start + 4].pos.y = sphere.center.y + sphere.radius * sinf(lat + kLatEvery);
+			vertexData[start + 4].pos.z = sphere.center.z + sphere.radius * cosf(lat + kLatEvery) * sinf(lon + kLonEvery);
 			vertexData[start + 4].pos.w = 1.0f;
 			vertexData[start + 4].texcoord = { u1,v1 };
 
 			//2c
 			vertexData[start + 5].pos.x = sphere.center.x + sphere.radius * cosf(lat) * cosf(lon + kLonEvery);
-			vertexData[start + 5].pos.y = sphere.center.x + sphere.radius * sinf(lat);
-			vertexData[start + 5].pos.z = sphere.center.x + sphere.radius * cosf(lat) * sinf(lon + kLonEvery);
+			vertexData[start + 5].pos.y = sphere.center.y + sphere.radius * sinf(lat);
+			vertexData[start + 5].pos.z = sphere.center.z + sphere.radius * cosf(lat) * sinf(lon + kLonEvery);
 			vertexData[start + 5].pos.w = 1.0f;
 			vertexData[start + 5].texcoord = { u1,v0 };
 
