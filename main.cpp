@@ -582,7 +582,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	descriptorRange[0].RangeType =D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	descriptorRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-	D3D12_ROOT_PARAMETER rootParameters[3] = {};
+	D3D12_ROOT_PARAMETER rootParameters[4] = {};
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	rootParameters[0].Descriptor.ShaderRegister = 0;
@@ -593,6 +593,9 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	rootParameters[2].DescriptorTable.pDescriptorRanges = descriptorRange;
 	rootParameters[2].DescriptorTable.NumDescriptorRanges = _countof(descriptorRange);
+	rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	rootParameters[3].Descriptor.ShaderRegister = 1;
 	descriptionRootSignature.pParameters = rootParameters;
 	descriptionRootSignature.NumParameters = _countof(rootParameters);
 
@@ -627,7 +630,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	assert(SUCCEEDED(hr));
 
 	//InputLayout
-	D3D12_INPUT_ELEMENT_DESC inputElementDescs[2] = {};
+	D3D12_INPUT_ELEMENT_DESC inputElementDescs[3] = {};
 	inputElementDescs[0].SemanticName = "POSITION";
 	inputElementDescs[0].SemanticIndex = 0;
 	inputElementDescs[0].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -636,6 +639,12 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	inputElementDescs[1].SemanticIndex = 0;
 	inputElementDescs[1].Format = DXGI_FORMAT_R32G32_FLOAT;
 	inputElementDescs[1].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
+	inputElementDescs[2].SemanticName = "NORMAL";
+	inputElementDescs[2].SemanticIndex = 0;
+	inputElementDescs[2].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	inputElementDescs[2].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
+
+
 	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc{};
 	inputLayoutDesc.pInputElementDescs = inputElementDescs;
 	inputLayoutDesc.NumElements = _countof(inputElementDescs);
@@ -680,7 +689,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	ID3D12PipelineState* graphicsPipelineState = nullptr;
 	hr = device->CreateGraphicsPipelineState(&graphicsPipelineStateDesc, IID_PPV_ARGS(&graphicsPipelineState));
 	assert(SUCCEEDED(hr));
-
+	
 	
 	//マテリアル用に変更
 	ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(VertexData) * 1536);
@@ -735,7 +744,11 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	//スプライト用頂点リソース
 	ID3D12Resource* vertexResourceSprite = CreateBufferResource(device, sizeof(VertexData) * 6);
+	ID3D12Resource* materialResourceSprite = CreateBufferResource(device, sizeof(Material));
+	ID3D12Resource* directionalLightResourceSprite = CreateBufferResource(device, sizeof(DirectionalLight));
 	VertexData* vertexDataSprite = nullptr;
+	Material* materialDataSprite = nullptr;
+	DirectionalLight* DirectionalLightDataSprite = nullptr;
 
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferViewSprite{};
 	vertexBufferViewSprite.BufferLocation = vertexResourceSprite->GetGPUVirtualAddress();
@@ -743,9 +756,14 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	vertexBufferViewSprite.StrideInBytes = sizeof(VertexData);
 	vertexResourceSprite->Map(0,nullptr,reinterpret_cast<void**>(&vertexDataSprite));
 
+	materialResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&materialDataSprite));
+
+	directionalLightResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&DirectionalLightDataSprite));
+
 	//1枚目
 	vertexDataSprite[0].pos = { 0.0f,360.0f,0.0f,1.0f };
 	vertexDataSprite[0].texcoord = { 0.0f,1.0f };
+	vertexDataSprite[0].normal = { 0.0f,0.0f,-1.0f };
 	vertexDataSprite[1].pos = { 0.0f,0.0f,0.0f,1.0f };
 	vertexDataSprite[1].texcoord = { 0.0f,0.0f };
 	vertexDataSprite[2].pos = { 640.0f,360.0f,0.0f,1.0f };
@@ -764,7 +782,12 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	transformationMatrixResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&transformationMatrixDataSprite));
 	*transformationMatrixDataSprite = MakeIdentity4x4();
 
+	materialDataSprite->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	materialDataSprite->enableLighting = false;
 
+	DirectionalLightDataSprite->color = { 1.0f,1.0f,1.0f,1.0f };
+	DirectionalLightDataSprite->direction = { 0.0f,-1.0f,0.0f };
+	DirectionalLightDataSprite->intensity = 1.0f;
 
 
 	//ビューボート
@@ -871,6 +894,9 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			vertexData[start].pos.z = sphere.center.z + sphere.radius * cosf(lat) * sinf(lon);
 			vertexData[start].pos.w = 1.0f;
 			vertexData[start].texcoord =  {u0,v0};
+			vertexData[start].normal.x = vertexData[start].pos.x;
+			vertexData[start].normal.y = vertexData[start].pos.y;
+			vertexData[start].normal.z = vertexData[start].pos.z;
 
 			//1b
 			vertexData[start + 1].pos.x = sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * cosf(lon);
@@ -878,6 +904,9 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			vertexData[start + 1].pos.z = sphere.center.z + sphere.radius * cosf(lat + kLatEvery) * sinf(lon);
 			vertexData[start + 1].pos.w = 1.0f;
 			vertexData[start + 1].texcoord = { u0,v1 };
+			vertexData[start + 1].normal.x = vertexData[start].pos.x;
+			vertexData[start + 1].normal.y = vertexData[start].pos.y;
+			vertexData[start + 1].normal.z = vertexData[start].pos.z;
 
 			//1c
 			vertexData[start + 2].pos.x = sphere.center.x + sphere.radius * cosf(lat) * cosf(lon + kLonEvery);
@@ -885,6 +914,9 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			vertexData[start + 2].pos.z = sphere.center.z + sphere.radius * cosf(lat) * sinf(lon + kLonEvery);
 			vertexData[start + 2].pos.w = 1.0f;
 			vertexData[start + 2].texcoord = { u1,v0 };
+			vertexData[start + 2].normal.x = vertexData[start].pos.x;
+			vertexData[start + 2].normal.y = vertexData[start].pos.y;
+			vertexData[start + 2].normal.z = vertexData[start].pos.z;
 
 			//2b
 			vertexData[start + 3].pos.x = sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * cosf(lon);
@@ -892,6 +924,9 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			vertexData[start + 3].pos.z = sphere.center.z + sphere.radius * cosf(lat + kLatEvery) * sinf(lon);
 			vertexData[start + 3].pos.w = 1.0f;
 			vertexData[start + 3].texcoord = { u0,v1 };
+			vertexData[start + 3].normal.x = vertexData[start].pos.x;
+			vertexData[start + 3].normal.y = vertexData[start].pos.y;
+			vertexData[start + 3].normal.z = vertexData[start].pos.z;
 
 			//2d
 			vertexData[start + 4].pos.x = sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * cosf(lon + kLonEvery);
@@ -899,6 +934,9 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			vertexData[start + 4].pos.z = sphere.center.z + sphere.radius * cosf(lat + kLatEvery) * sinf(lon + kLonEvery);
 			vertexData[start + 4].pos.w = 1.0f;
 			vertexData[start + 4].texcoord = { u1,v1 };
+			vertexData[start + 4].normal.x = vertexData[start].pos.x;
+			vertexData[start + 4].normal.y = vertexData[start].pos.y;
+			vertexData[start + 4].normal.z = vertexData[start].pos.z;
 
 			//2c
 			vertexData[start + 5].pos.x = sphere.center.x + sphere.radius * cosf(lat) * cosf(lon + kLonEvery);
@@ -906,9 +944,11 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			vertexData[start + 5].pos.z = sphere.center.z + sphere.radius * cosf(lat) * sinf(lon + kLonEvery);
 			vertexData[start + 5].pos.w = 1.0f;
 			vertexData[start + 5].texcoord = { u1,v0 };
+			vertexData[start + 5].normal.x = vertexData[start].pos.x;
+			vertexData[start + 5].normal.y = vertexData[start].pos.y;
+			vertexData[start + 5].normal.z = vertexData[start].pos.z;
 
-
-
+			
 
 		}
 		
@@ -1011,6 +1051,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			
 
 			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
 			commandList->SetGraphicsRootConstantBufferView(0,materialResource->GetGPUVirtualAddress());
 			commandList->SetGraphicsRootConstantBufferView(1,wvpResource->GetGPUVirtualAddress());
 
@@ -1071,13 +1112,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			hr = commandList->Reset(commandAllocator, nullptr);
 			assert(SUCCEEDED(hr));
 			
-
-
 		}
-
-
-
-
 
 	}
 

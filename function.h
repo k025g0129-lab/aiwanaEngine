@@ -6,6 +6,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+
 struct Vector2 {
 	float x, y;
 };
@@ -31,12 +32,29 @@ struct Matrix4x4 {
 struct VertexData{
 	Vector4 pos;
 	Vector2 texcoord;
+	Vector3 normal;
+};
 
+struct Material {
+	Vector4 color;	
+	int32_t enableLighting;
 };
 
 struct Sphere {
 	Vector3 center;
 	float radius;
+};
+
+struct TransformationMaterial {
+	Matrix4x4 WVP;
+	Matrix4x4 World;
+};
+
+struct DirectionalLight
+{
+	Vector4 color;
+	Vector3 direction;
+	float intensity;
 };
 
 //行列積
