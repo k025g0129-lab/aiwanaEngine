@@ -694,7 +694,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	//マテリアル用に変更
 	ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(VertexData) * 1536);
 	ID3D12Resource* materialResource = CreateBufferResource(device, sizeof(Vector4));
-	ID3D12Resource* wvpResource = CreateBufferResource(device, sizeof(Matrix4x4));
+	ID3D12Resource* wvpResource = CreateBufferResource(device, sizeof(TransformationMaterial));
 
 
 	//頂点バッファビュー作成
@@ -706,7 +706,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	//頂点リソースにデータを書き込む
 	VertexData* vertexData = nullptr;
 	Vector4* materialData = nullptr;
-	Matrix4x4* wvpData = nullptr;
+	TransformationMaterial* wvpData = nullptr;
 
 	vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
 	materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData));
@@ -740,7 +740,8 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	*materialData = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 
-	*wvpData = MakeIdentity4x4();
+	wvpData->World = MakeIdentity4x4();
+	wvpData->WVP = MakeIdentity4x4();
 
 	//スプライト用頂点リソース
 	ID3D12Resource* vertexResourceSprite = CreateBufferResource(device, sizeof(VertexData) * 6);
@@ -817,7 +818,8 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	Matrix4x4 viewMatrix = Inverse(cameraMatrix);
 	Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(kClientWidth) / float(kClientHeight), 0.1f, 100.0f);
 	Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatri, Multiply(viewMatrix, projectionMatrix));
-	*wvpData = worldViewProjectionMatrix;
+	wvpData->WVP = worldViewProjectionMatrix;
+	wvpData->World = worldMatri;
 
 	Matrix4x4 worldMatriSprite = MakeAffineMatrix(transformSprite.scale, transformSprite.rotate, transformSprite.translate);
 	Matrix4x4 viewMatrixSprite = MakeIdentity4x4();
@@ -1000,7 +1002,8 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 			transformSRT.rotate.y += 0.01f;
 			worldMatri = MakeAffineMatrix(transformSRT.scale, transformSRT.rotate, transformSRT.translate);
-			*wvpData = worldMatri;
+			wvpData->World = worldMatri;
+			wvpData->WVP = worldViewProjectionMatrix;
 
 
 			//これから書き込むバックバッファのインデックスを取得
