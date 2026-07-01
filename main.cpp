@@ -739,6 +739,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	vertexData[5].texcoord = { 1.0f,1.0f };
 
 	materialData->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	materialData->enableLighting = 1;
 
 	wvpData->World = MakeIdentity4x4();
 	wvpData->WVP = MakeIdentity4x4();
@@ -1057,26 +1058,30 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 				commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 				commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
-				commandList->SetGraphicsRootConstantBufferView(0,materialResource->GetGPUVirtualAddress());
+
 				commandList->SetGraphicsRootConstantBufferView(1,wvpResource->GetGPUVirtualAddress());
 				
 
-				commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? textureSrvHandleGPU2 : textureSrvHandleGPU);
+				//commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? textureSrvHandleGPU2 : textureSrvHandleGPU);
 
 				commandList->DrawInstanced(6, 1, 0, 0);
 
 				commandList->SetGraphicsRootDescriptorTable(2,textureSrvHandleGPU);
 
+	
+				//球
+				commandList->SetGraphicsRootConstantBufferView(0,materialResource->GetGPUVirtualAddress());
 				commandList->SetGraphicsRootConstantBufferView(3, directionalLightResourceSphere->GetGPUVirtualAddress());
 
 				commandList->DrawInstanced(kSubdivision * kSubdivision * 6, 1, 0, 0);
 
-	
-
+				
 				//2D
+				commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
 				commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
 				commandList->SetGraphicsRootConstantBufferView(1,transformationMatrixResourceSprite->GetGPUVirtualAddress());
 				commandList->DrawInstanced(6, 1, 0, 0);
+
 
 
 			#ifdef USE_IMGUI
