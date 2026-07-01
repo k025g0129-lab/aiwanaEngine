@@ -705,7 +705,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	//頂点リソースにデータを書き込む
 	VertexData* vertexData = nullptr;
-	Vector4* materialData = nullptr;
+	Material* materialData = nullptr;
 	TransformationMaterial* wvpData = nullptr;
 
 	vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
@@ -738,7 +738,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	vertexData[5].pos = { 0.5f,-0.5f,-0.5f,1.0f };
 	vertexData[5].texcoord = { 1.0f,1.0f };
 
-	*materialData = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	materialData->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	wvpData->World = MakeIdentity4x4();
 	wvpData->WVP = MakeIdentity4x4();
@@ -746,10 +746,11 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	//スプライト用頂点リソース
 	ID3D12Resource* vertexResourceSprite = CreateBufferResource(device, sizeof(VertexData) * 6);
 	ID3D12Resource* materialResourceSprite = CreateBufferResource(device, sizeof(Material));
-	ID3D12Resource* directionalLightResourceSprite = CreateBufferResource(device, sizeof(DirectionalLight));
+	ID3D12Resource* directionalLightResourceSphere = CreateBufferResource(device, sizeof(DirectionalLight));
+	directionalLightResourceSphere->SetName(L"Sphere:directionalLightResource");
 	VertexData* vertexDataSprite = nullptr;
 	Material* materialDataSprite = nullptr;
-	DirectionalLight* DirectionalLightDataSprite = nullptr;
+	DirectionalLight* DirectionalLightDataSphere = nullptr;
 
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferViewSprite{};
 	vertexBufferViewSprite.BufferLocation = vertexResourceSprite->GetGPUVirtualAddress();
@@ -759,7 +760,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	materialResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&materialDataSprite));
 
-	directionalLightResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&DirectionalLightDataSprite));
+	directionalLightResourceSphere->Map(0, nullptr, reinterpret_cast<void**>(&DirectionalLightDataSphere));
 
 	//1枚目
 	vertexDataSprite[0].pos = { 0.0f,360.0f,0.0f,1.0f };
@@ -786,10 +787,10 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	materialDataSprite->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 	materialDataSprite->enableLighting = false;
 
-	DirectionalLightDataSprite->color = { 1.0f,1.0f,1.0f,1.0f };
-	DirectionalLightDataSprite->direction = { 0.0f,-1.0f,0.0f };
-	DirectionalLightDataSprite->intensity = 1.0f;
-
+	DirectionalLightDataSphere->color = { 1.0f,1.0f,1.0f,1.0f };
+	DirectionalLightDataSphere->direction = { 0.0f,-1.0f,0.0f };
+	DirectionalLightDataSphere->intensity = 1.0f;
+	
 
 	//ビューボート
 	D3D12_VIEWPORT viewport{};
@@ -1002,6 +1003,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 			transformSRT.rotate.y += 0.01f;
 			worldMatri = MakeAffineMatrix(transformSRT.scale, transformSRT.rotate, transformSRT.translate);
+			worldViewProjectionMatrix = Multiply(worldMatri, Multiply(viewMatrix, projectionMatrix));
 			wvpData->World = worldMatri;
 			wvpData->WVP = worldViewProjectionMatrix;
 
@@ -1057,7 +1059,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 				commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
 				commandList->SetGraphicsRootConstantBufferView(0,materialResource->GetGPUVirtualAddress());
 				commandList->SetGraphicsRootConstantBufferView(1,wvpResource->GetGPUVirtualAddress());
-
+				
 
 				commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? textureSrvHandleGPU2 : textureSrvHandleGPU);
 
@@ -1065,8 +1067,11 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 				commandList->SetGraphicsRootDescriptorTable(2,textureSrvHandleGPU);
 
+				commandList->SetGraphicsRootConstantBufferView(3, directionalLightResourceSphere->GetGPUVirtualAddress());
 
 				commandList->DrawInstanced(kSubdivision * kSubdivision * 6, 1, 0, 0);
+
+	
 
 				//2D
 				commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
