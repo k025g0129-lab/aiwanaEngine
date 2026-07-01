@@ -693,7 +693,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	
 	//マテリアル用に変更
 	ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(VertexData) * 1536);
-	ID3D12Resource* materialResource = CreateBufferResource(device, sizeof(Vector4));
+	ID3D12Resource* materialResource = CreateBufferResource(device, sizeof(Material));
 	ID3D12Resource* wvpResource = CreateBufferResource(device, sizeof(TransformationMaterial));
 
 
@@ -778,7 +778,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	vertexDataSprite[5].pos = { 640.0f,360.0f,0.0f,1.0f };
 	vertexDataSprite[5].texcoord = { 1.0f,1.0f };
 
-	ID3D12Resource* transformationMatrixResourceSprite = CreateBufferResource(device, sizeof(Matrix4x4));
+	ID3D12Resource* transformationMatrixResourceSprite = CreateBufferResource(device, sizeof(TransformationMaterial));
 	Matrix4x4* transformationMatrixDataSprite = nullptr;
 	transformationMatrixResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&transformationMatrixDataSprite));
 	*transformationMatrixDataSprite = MakeIdentity4x4();
@@ -957,7 +957,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	}
 
 	#ifdef USE_IMGUI
-
+	
 	//ImGui初期化
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -1044,34 +1044,34 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			#endif // DEBUG
 
 
-			//描画	
-			commandList->RSSetViewports(1, &viewport);
-			commandList->RSSetScissorRects(1, &scissorRect);
+				//描画	
+				commandList->RSSetViewports(1, &viewport);
+				commandList->RSSetScissorRects(1, &scissorRect);
 
-			commandList->SetGraphicsRootSignature(rootSignature);
-			commandList->SetPipelineState(graphicsPipelineState);
-			commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
+				commandList->SetGraphicsRootSignature(rootSignature);
+				commandList->SetPipelineState(graphicsPipelineState);
+				commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
 			
 
-			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-			commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
-			commandList->SetGraphicsRootConstantBufferView(0,materialResource->GetGPUVirtualAddress());
-			commandList->SetGraphicsRootConstantBufferView(1,wvpResource->GetGPUVirtualAddress());
+				commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+				commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
+				commandList->SetGraphicsRootConstantBufferView(0,materialResource->GetGPUVirtualAddress());
+				commandList->SetGraphicsRootConstantBufferView(1,wvpResource->GetGPUVirtualAddress());
 
 
-			commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? textureSrvHandleGPU2 : textureSrvHandleGPU);
+				commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? textureSrvHandleGPU2 : textureSrvHandleGPU);
 
-			commandList->DrawInstanced(6, 1, 0, 0);
+				commandList->DrawInstanced(6, 1, 0, 0);
 
-			commandList->SetGraphicsRootDescriptorTable(2,textureSrvHandleGPU);
+				commandList->SetGraphicsRootDescriptorTable(2,textureSrvHandleGPU);
 
 
-			commandList->DrawInstanced(kSubdivision * kSubdivision * 6, 1, 0, 0);
+				commandList->DrawInstanced(kSubdivision * kSubdivision * 6, 1, 0, 0);
 
-			//2D
-			commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
-			commandList->SetGraphicsRootConstantBufferView(1,transformationMatrixResourceSprite->GetGPUVirtualAddress());
-			commandList->DrawInstanced(6, 1, 0, 0);
+				//2D
+				commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
+				commandList->SetGraphicsRootConstantBufferView(1,transformationMatrixResourceSprite->GetGPUVirtualAddress());
+				commandList->DrawInstanced(6, 1, 0, 0);
 
 
 			#ifdef USE_IMGUI
