@@ -446,7 +446,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
 		//警告時停止
 		//
-		//infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
+		infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
 
 		D3D12_MESSAGE_ID denyIds[] = {
 			D3D12_MESSAGE_ID_RESOURCE_BARRIER_MISMATCHING_COMMAND_LIST_TYPE
@@ -740,6 +740,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	materialData->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 	materialData->enableLighting = 1;
+	materialData->uvTransform = MakeIdentity4x4();
 
 	wvpData->World = MakeIdentity4x4();
 	wvpData->WVP = MakeIdentity4x4();
@@ -751,6 +752,11 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	ID3D12Resource* directionalLightResourceSphere = CreateBufferResource(device, sizeof(DirectionalLight));
 
 	uint32_t* indexDataSprite = nullptr;
+	TransformSRT uvTransformSprite = {
+		{1.0f,1.0f,1.0f},
+		{0.0f,0.0f,0.0f},
+		{0.0f,0.0f,0.0f},
+	};
 
 	directionalLightResourceSphere->SetName(L"Sphere:directionalLightResource");
 	VertexData* vertexDataSprite = nullptr;
@@ -795,16 +801,22 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	ID3D12Resource* transformationMatrixResourceSprite = CreateBufferResource(device, sizeof(TransformationMaterial));
 	Matrix4x4* transformationMatrixDataSprite = nullptr;
+	Matrix4x4 uvTransformMatrix = MakeScaleMatrix(uvTransformSprite.scale);
+
 	transformationMatrixResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&transformationMatrixDataSprite));
 	*transformationMatrixDataSprite = MakeIdentity4x4();
 
 	materialDataSprite->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 	materialDataSprite->enableLighting = false;
+	materialDataSprite->uvTransform = MakeIdentity4x4();
 
 	DirectionalLightDataSphere->color = { 1.0f,1.0f,1.0f,1.0f };
 	DirectionalLightDataSphere->direction = { 0.0f,-1.0f,0.0f };
 	DirectionalLightDataSphere->intensity = 1.0f;
-	
+
+	uvTransformMatrix = Multiply(uvTransformMatrix,MakeRotateZMatrix(uvTransformSprite.rotate.z));
+	uvTransformMatrix = Multiply(uvTransformMatrix,MakeTranslateMatrix(uvTransformSprite.translate));
+	materialDataSprite->uvTransform = uvTransformMatrix;
 
 	//ビューボート
 	D3D12_VIEWPORT viewport{};
@@ -1011,6 +1023,9 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 			ImGui::ShowDemoWindow();
 			ImGui::Checkbox("useMonsterBall", &useMonsterBall);
+			ImGui::DragFloat2("UVTransform",&uvTransformSprite.translate.x,0.01f,-10.0f,10.0f);
+			ImGui::DragFloat2("UVScale",&uvTransformSprite.scale.x,0.01f,-10.0f,10.0f);
+			ImGui::SliderAngle("UVRotate",&uvTransformSprite.rotate.z);
 
 			#endif // USE_IMGUI
 
