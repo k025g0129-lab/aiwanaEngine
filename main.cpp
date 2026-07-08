@@ -691,6 +691,9 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	assert(SUCCEEDED(hr));
 
 
+	//読み込み
+	ModelData modelData = LoadObjFile("resources", "plane.obj");
+
 	//マテリアル用に変更
 	ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(VertexData) * 1536);
 	ID3D12Resource* materialResource = CreateBufferResource(device, sizeof(Material));
@@ -711,6 +714,8 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
 	materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData));
 	wvpResource->Map(0, nullptr, reinterpret_cast<void**>(&wvpData));
+
+	
 
 	//1枚目
 	//左下
@@ -983,24 +988,36 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	}
 
-	//新球(今までので被る部分は2を付ける、修正予定)
+	//新(今までので被る部分は2を付ける、修正予定)
 
-	//読み込み
-	ModelData modelData = LoadObjFile("resources", "plane.obj");
+	////wvp
+	//ID3D12Resource* wvpResource2 = CreateBufferResource(device, sizeof(TransformationMaterial));
+	//TransformationMaterial* wvpData2 = nullptr;
+	//wvpResource2->Map(0,nullptr,reinterpret_cast<void**>(&wvpData2));
 
-	//リソース作成
-	ID3D12Resource* vertexResource2= CreateBufferResource(device, sizeof(VertexData) * modelData.vertices.size());
 
-	//バッファビュー作成
-	D3D12_VERTEX_BUFFER_VIEW vertexBufferView2{};
-	vertexBufferView2.BufferLocation = vertexResource2->GetGPUVirtualAddress();
-	vertexBufferView2.SizeInBytes = UINT(sizeof(VertexData) * modelData.vertices.size());
-	vertexBufferView2.StrideInBytes = sizeof(VertexData);
+	//wvpData2->World = MakeIdentity4x4();
+	//wvpData2->WVP = MakeIdentity4x4();
 
-	//頂点データ書き込み
-	VertexData* vertexData2 = nullptr;
-	vertexResource2->Map(0, nullptr, reinterpret_cast<void**>(&vertexData2));
-	std::memcpy(vertexData2,modelData.vertices.data(),sizeof(VertexData) * modelData.vertices.size());
+
+	//wvpData2->WVP = worldViewProjectionMatrix;
+	//wvpData2->World = worldMatri;
+
+
+	////リソース作成
+	//ID3D12Resource* vertexResource2= CreateBufferResource(device, sizeof(VertexData) * modelData.vertices.size());
+
+	////バッファビュー作成
+	//D3D12_VERTEX_BUFFER_VIEW vertexBufferView2{};
+	//vertexBufferView2.BufferLocation = vertexResource2->GetGPUVirtualAddress();
+	//vertexBufferView2.SizeInBytes = UINT(sizeof(VertexData) * modelData.vertices.size());
+	//vertexBufferView2.StrideInBytes = sizeof(VertexData);
+
+	////頂点データ書き込み
+	//VertexData* vertexData2 = nullptr;
+	//vertexResource2->Map(0, nullptr, reinterpret_cast<void**>(&vertexData2));
+	//std::memcpy(vertexData2,modelData.vertices.data(),sizeof(VertexData) * modelData.vertices.size());
+	std::memcpy(vertexData, modelData.vertices.data(), sizeof(VertexData)* modelData.vertices.size());
 
 
 
@@ -1050,13 +1067,12 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 			#endif // USE_IMGUI
 
-
 			transformSRT.rotate.y += 0.01f;
 			worldMatri = MakeAffineMatrix(transformSRT.scale, transformSRT.rotate, transformSRT.translate);
 			worldViewProjectionMatrix = Multiply(worldMatri, Multiply(viewMatrix, projectionMatrix));
+
 			wvpData->World = worldMatri;
 			wvpData->WVP = worldViewProjectionMatrix;
-
 
 			//これから書き込むバックバッファのインデックスを取得
 			UINT backBufferIndex = swapChain->GetCurrentBackBufferIndex();
