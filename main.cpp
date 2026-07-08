@@ -512,7 +512,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 	ID3D12Resource* depthStencilResource = CreatDepthStencilTextureResource(device, kClientWidth, kClientHeight);
 
-	device->CreateDepthStencilView(depthStencilResource,&dsvDesc,dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+	device->CreateDepthStencilView(depthStencilResource, &dsvDesc, dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
 	//DepthStencilState設定
 	D3D12_DEPTH_STENCIL_DESC depthStencilDesc{};
@@ -520,7 +520,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
 	depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 
-	
+
 
 	//リソースを引っこ抜く
 	ID3D12Resource* swapChainResources[2] = { nullptr };
@@ -579,7 +579,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	D3D12_DESCRIPTOR_RANGE descriptorRange[1] = {};
 	descriptorRange[0].BaseShaderRegister = 0;
 	descriptorRange[0].NumDescriptors = 1;
-	descriptorRange[0].RangeType =D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	descriptorRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	descriptorRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
 	D3D12_ROOT_PARAMETER rootParameters[4] = {};
@@ -689,8 +689,8 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	ID3D12PipelineState* graphicsPipelineState = nullptr;
 	hr = device->CreateGraphicsPipelineState(&graphicsPipelineStateDesc, IID_PPV_ARGS(&graphicsPipelineState));
 	assert(SUCCEEDED(hr));
-	
-	
+
+
 	//マテリアル用に変更
 	ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(VertexData) * 1536);
 	ID3D12Resource* materialResource = CreateBufferResource(device, sizeof(Material));
@@ -700,14 +700,14 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	//頂点バッファビュー作成
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
 	vertexBufferView.BufferLocation = vertexResource->GetGPUVirtualAddress();
-	vertexBufferView.SizeInBytes = sizeof(VertexData) *1536;
+	vertexBufferView.SizeInBytes = sizeof(VertexData) * 1536;
 	vertexBufferView.StrideInBytes = sizeof(VertexData);
 
 	//頂点リソースにデータを書き込む
 	VertexData* vertexData = nullptr;
 	Material* materialData = nullptr;
 	TransformationMaterial* wvpData = nullptr;
-
+		
 	vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
 	materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData));
 	wvpResource->Map(0, nullptr, reinterpret_cast<void**>(&wvpData));
@@ -716,11 +716,11 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	//左下
 	vertexData[0].pos = { -0.5f,-0.5f,0.0f,1.0f };
 	vertexData[0].texcoord = { 0.0f,1.0f };
-	
+
 	//上
 	vertexData[1].pos = { 0.0f,0.5f,0.0f,1.0f };
 	vertexData[1].texcoord = { 0.5f,0.0f };
-	
+
 	//右下
 	vertexData[2].pos = { 0.5f,-0.5f,0.0f,1.0f };
 	vertexData[2].texcoord = { 1.0f,1.0f };
@@ -774,7 +774,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	indexBufferViewSprite.SizeInBytes = sizeof(uint32_t) * 6;
 	indexBufferViewSprite.Format = DXGI_FORMAT_R32_UINT;
 
-	vertexResourceSprite->Map(0,nullptr,reinterpret_cast<void**>(&vertexDataSprite));
+	vertexResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&vertexDataSprite));
 	materialResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&materialDataSprite));
 	directionalLightResourceSphere->Map(0, nullptr, reinterpret_cast<void**>(&DirectionalLightDataSphere));
 	indexResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&indexDataSprite));
@@ -786,12 +786,12 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	indexDataSprite[4] = 3;
 	indexDataSprite[5] = 2;
 
-	
+
 	//左下、左上、右下、右上
 	vertexDataSprite[0].pos = { 0.0f,360.0f,0.0f,1.0f };
 	vertexDataSprite[0].texcoord = { 0.0f,1.0f };
 	vertexDataSprite[0].normal = { 0.0f,0.0f,-1.0f };
-	vertexDataSprite[1].pos = { 0.0f,0.0f,0.0f,1.0f };	
+	vertexDataSprite[1].pos = { 0.0f,0.0f,0.0f,1.0f };
 	vertexDataSprite[1].texcoord = { 0.0f,0.0f };
 	vertexDataSprite[2].pos = { 640.0f,360.0f,0.0f,1.0f };
 	vertexDataSprite[2].texcoord = { 1.0f,1.0f };
@@ -814,8 +814,8 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	DirectionalLightDataSphere->direction = { 0.0f,-1.0f,0.0f };
 	DirectionalLightDataSphere->intensity = 1.0f;
 
-	uvTransformMatrix = Multiply(uvTransformMatrix,MakeRotateZMatrix(uvTransformSprite.rotate.z));
-	uvTransformMatrix = Multiply(uvTransformMatrix,MakeTranslateMatrix(uvTransformSprite.translate));
+	uvTransformMatrix = Multiply(uvTransformMatrix, MakeRotateZMatrix(uvTransformSprite.rotate.z));
+	uvTransformMatrix = Multiply(uvTransformMatrix, MakeTranslateMatrix(uvTransformSprite.translate));
 	materialDataSprite->uvTransform = uvTransformMatrix;
 
 	//ビューボート
@@ -850,7 +850,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	Matrix4x4 worldMatriSprite = MakeAffineMatrix(transformSprite.scale, transformSprite.rotate, transformSprite.translate);
 	Matrix4x4 viewMatrixSprite = MakeIdentity4x4();
-	Matrix4x4 projectionMatrixSprite = MakeOrthographicMatrix(0.0f, 0.0f,float(kClientWidth) , float(kClientHeight), 0.0f, 100.0f);
+	Matrix4x4 projectionMatrixSprite = MakeOrthographicMatrix(0.0f, 0.0f, float(kClientWidth), float(kClientHeight), 0.0f, 100.0f);
 	Matrix4x4 worldViewProjectionMatrixSprite = Multiply(worldMatriSprite, Multiply(viewMatrixSprite, projectionMatrixSprite));
 	*transformationMatrixDataSprite = worldViewProjectionMatrixSprite;
 
@@ -863,7 +863,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	const DirectX::TexMetadata& metadata2 = mipImages2.GetMetadata();
 	ID3D12Resource* textureResource2 = CreateTextureResource(device, metadata2);
 	UploadTextureData(textureResource2, mipImages2);
-	
+
 	//SRV設定
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 	srvDesc.Format = metadata.format;
@@ -893,7 +893,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	device->CreateShaderResourceView(textureResource2, &srvDesc2, textureSrvHandleCPU2);
 
 
-	//球
+	//旧球(コメントする可能性あり)
 
 	Sphere sphere;
 	sphere.center = { 0.0f,0.0f,0.0f };
@@ -922,7 +922,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			vertexData[start].pos.y = sphere.center.y + sphere.radius * sinf(lat);
 			vertexData[start].pos.z = sphere.center.z + sphere.radius * cosf(lat) * sinf(lon);
 			vertexData[start].pos.w = 1.0f;
-			vertexData[start].texcoord =  {u0,v0};
+			vertexData[start].texcoord = { u0,v0 };
 			vertexData[start].normal.x = vertexData[start].pos.x;
 			vertexData[start].normal.y = vertexData[start].pos.y;
 			vertexData[start].normal.z = vertexData[start].pos.z;
@@ -977,11 +977,32 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			vertexData[start + 5].normal.y = vertexData[start].pos.y;
 			vertexData[start + 5].normal.z = vertexData[start].pos.z;
 
-			
+
 
 		}
-		
+
 	}
+
+	//新球(今までので被る部分は2を付ける、修正予定)
+
+	//読み込み
+	ModelData modelData = LoadObjFile("resources", "plane.obj");
+
+	//リソース作成
+	ID3D12Resource* vertexResource2= CreateBufferResource(device, sizeof(VertexData) * modelData.vertices.size());
+
+	//バッファビュー作成
+	D3D12_VERTEX_BUFFER_VIEW vertexBufferView2{};
+	vertexBufferView2.BufferLocation = vertexResource2->GetGPUVirtualAddress();
+	vertexBufferView2.SizeInBytes = UINT(sizeof(VertexData) * modelData.vertices.size());
+	vertexBufferView2.StrideInBytes = sizeof(VertexData);
+
+	//頂点データ書き込み
+	VertexData* vertexData2 = nullptr;
+	vertexResource2->Map(0, nullptr, reinterpret_cast<void**>(&vertexData2));
+	std::memcpy(vertexData2,modelData.vertices.data(),sizeof(VertexData) * modelData.vertices.size());
+
+
 
 	#ifdef USE_IMGUI
 	
@@ -1088,11 +1109,12 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 				commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
 
 				commandList->SetGraphicsRootConstantBufferView(1,wvpResource->GetGPUVirtualAddress());
-				
 
-				//commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? textureSrvHandleGPU2 : textureSrvHandleGPU);
+				commandList->DrawInstanced(UINT(modelData.vertices.size()), 1, 0, 0);
 
-				commandList->DrawInstanced(6, 1, 0, 0);
+				////commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? textureSrvHandleGPU2 : textureSrvHandleGPU);
+
+				//commandList->DrawInstanced(6, 1, 0, 0);
 
 				commandList->SetGraphicsRootDescriptorTable(2,textureSrvHandleGPU);
 
@@ -1101,17 +1123,18 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 				commandList->SetGraphicsRootConstantBufferView(0,materialResource->GetGPUVirtualAddress());
 				commandList->SetGraphicsRootConstantBufferView(3, directionalLightResourceSphere->GetGPUVirtualAddress());
 
-				commandList->DrawInstanced(kSubdivision * kSubdivision * 6, 1, 0, 0);
+				//commandList->DrawInstanced(kSubdivision * kSubdivision * 6, 1, 0, 0);
+
 
 				
-				//2D
-				commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
+				////2D
+				//commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
+				////commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
 				//commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
-				commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
-				commandList->IASetIndexBuffer(&indexBufferViewSprite);
-				commandList->SetGraphicsRootConstantBufferView(1,transformationMatrixResourceSprite->GetGPUVirtualAddress());
-				//commandList->DrawInstanced(6, 1, 0, 0);
-				commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
+				//commandList->IASetIndexBuffer(&indexBufferViewSprite);
+				//commandList->SetGraphicsRootConstantBufferView(1,transformationMatrixResourceSprite->GetGPUVirtualAddress());
+				////commandList->DrawInstanced(6, 1, 0, 0);
+				//commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
 
 

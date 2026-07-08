@@ -5,6 +5,10 @@
 #include <cassert> 
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <vector>
+#include <fstream>
+#include <sstream>
+
 
 
 struct Vector2 {
@@ -63,6 +67,10 @@ struct DirectionalLight
 	float intensity;
 };
 
+struct ModelData{
+	std::vector<VertexData> vertices;
+};
+
 //行列積
 Matrix4x4 Multiply(const Matrix4x4& m1, const Matrix4x4& m2);
 
@@ -94,3 +102,5 @@ Matrix4x4 MakeOrthographicMatrix(float left, float top, float right, float botto
 
 
 void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color);
+
+ModelData LoadObjFile(const std::string& directoryPath, const std::string& filename);
