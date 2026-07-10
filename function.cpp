@@ -342,6 +342,7 @@ ModelData LoadObjFile(const std::string& directoryPath, const std::string& filen
 	std::vector<Vector3> normals;
 	std::vector<Vector2> texcoords;
 	std::string line;
+
 	std::ifstream file(directoryPath + "/" + filename);
 	assert(file.is_open());
 
@@ -361,13 +362,15 @@ ModelData LoadObjFile(const std::string& directoryPath, const std::string& filen
 			Vector2 texcoord;
 			s >> texcoord.x >> texcoord.y;
 			texcoords.push_back(texcoord);
-
+			
 		} else if (identifier == "vn") {
 			Vector3 normal;
 			s >> normal.x >> normal.y >> normal.z;
 			normals.push_back(normal);
 
 		} else if(identifier == "f"){
+
+			VertexData triangle[3];
 
 			for (int32_t faceVertex = 0; faceVertex < 3; ++faceVertex) {
 				std::string vertexDefinition;
@@ -385,15 +388,21 @@ ModelData LoadObjFile(const std::string& directoryPath, const std::string& filen
 				Vector4 position = positions[elementIndices[0] - 1];
 				Vector2 texcoord = texcoords[elementIndices[1] - 1];
 				Vector3 normal = normals[elementIndices[2] - 1];
+
+				//何故かxじゃなくてyを-1倍すると資料通りになる
+				//position.x *= -1.0f;
+				position.y *= -1.0f;
+				normal.x *= -1.0f;
 				VertexData vertex = {position, texcoord, normal};
 				modelData.vertices.push_back(vertex);
+				triangle[faceVertex] = { position,texcoord,normal };
 
 			}
+			modelData.vertices.push_back(triangle[2]);
+			modelData.vertices.push_back(triangle[1]);
+			modelData.vertices.push_back(triangle[0]);
+
 		}
-
-
 	}
-
-
 	return modelData;
 }

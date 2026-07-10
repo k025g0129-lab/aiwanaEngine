@@ -695,7 +695,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	ModelData modelData = LoadObjFile("resources", "plane.obj");
 
 	//マテリアル用に変更
-	ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(VertexData) * 1536);
+	ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(VertexData) * modelData.vertices.size());
 	ID3D12Resource* materialResource = CreateBufferResource(device, sizeof(Material));
 	ID3D12Resource* wvpResource = CreateBufferResource(device, sizeof(TransformationMaterial));
 
@@ -703,7 +703,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	//頂点バッファビュー作成
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
 	vertexBufferView.BufferLocation = vertexResource->GetGPUVirtualAddress();
-	vertexBufferView.SizeInBytes = sizeof(VertexData) * 1536;
+	vertexBufferView.SizeInBytes = UINT(sizeof(VertexData) * modelData.vertices.size());
 	vertexBufferView.StrideInBytes = sizeof(VertexData);
 
 	//頂点リソースにデータを書き込む
@@ -715,33 +715,34 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData));
 	wvpResource->Map(0, nullptr, reinterpret_cast<void**>(&wvpData));
 
-	
+	std::memcpy(vertexData, modelData.vertices.data(), sizeof(VertexData) * modelData.vertices.size());
 
-	//1枚目
-	//左下
-	vertexData[0].pos = { -0.5f,-0.5f,0.0f,1.0f };
-	vertexData[0].texcoord = { 0.0f,1.0f };
+	//封印
+	////1枚目
+	////左下
+	//vertexData[0].pos = { -0.5f,-0.5f,0.0f,1.0f };
+	//vertexData[0].texcoord = { 0.0f,1.0f };
 
-	//上
-	vertexData[1].pos = { 0.0f,0.5f,0.0f,1.0f };
-	vertexData[1].texcoord = { 0.5f,0.0f };
+	////上
+	//vertexData[1].pos = { 0.0f,0.5f,0.0f,1.0f };
+	//vertexData[1].texcoord = { 0.5f,0.0f };
 
-	//右下
-	vertexData[2].pos = { 0.5f,-0.5f,0.0f,1.0f };
-	vertexData[2].texcoord = { 1.0f,1.0f };
+	////右下
+	//vertexData[2].pos = { 0.5f,-0.5f,0.0f,1.0f };
+	//vertexData[2].texcoord = { 1.0f,1.0f };
 
-	//2枚目
-	//左
-	vertexData[3].pos = { -0.5f,-0.5f,0.5f,1.0f };
-	vertexData[3].texcoord = { 0.0f,1.0f };
+	////2枚目
+	////左
+	//vertexData[3].pos = { -0.5f,-0.5f,0.5f,1.0f };
+	//vertexData[3].texcoord = { 0.0f,1.0f };
 
-	//上
-	vertexData[4].pos = { 0.0f,0.0f,0.0f,1.0f };
-	vertexData[4].texcoord = { 0.5f,0.0f };
+	////上
+	//vertexData[4].pos = { 0.0f,0.0f,0.0f,1.0f };
+	//vertexData[4].texcoord = { 0.5f,0.0f };
 
-	//右下
-	vertexData[5].pos = { 0.5f,-0.5f,-0.5f,1.0f };
-	vertexData[5].texcoord = { 1.0f,1.0f };
+	////右下
+	//vertexData[5].pos = { 0.5f,-0.5f,-0.5f,1.0f };
+	//vertexData[5].texcoord = { 1.0f,1.0f };
 
 	materialData->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 	materialData->enableLighting = 1;
@@ -898,126 +899,95 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	device->CreateShaderResourceView(textureResource2, &srvDesc2, textureSrvHandleCPU2);
 
 
-	//旧球(コメントする可能性あり)
+	//球(コメントする可能性あり)
 
-	Sphere sphere;
-	sphere.center = { 0.0f,0.0f,0.0f };
-	sphere.radius = 1.0f;
-	const uint32_t kSubdivision = 16;
-	const float kLonEvery = 2.0f * static_cast<float>(M_PI) / static_cast<float>(kSubdivision);
-	const float kLatEvery = static_cast<float>(M_PI) / static_cast<float>(kSubdivision);
+	//Sphere sphere;
+	//sphere.center = { 0.0f,0.0f,0.0f };
+	//sphere.radius = 1.0f;
+	//const uint32_t kSubdivision = 16;
+	//const float kLonEvery = 2.0f * static_cast<float>(M_PI) / static_cast<float>(kSubdivision);
+	//const float kLatEvery = static_cast<float>(M_PI) / static_cast<float>(kSubdivision);
+	//	
+	//for (uint32_t latIndex = 0; latIndex < kSubdivision; latIndex++) {
 
-	for (uint32_t latIndex = 0; latIndex < kSubdivision; latIndex++) {
+	//	float lat = -static_cast<float>(M_PI) / 2.0f + kLatEvery * latIndex;
 
-		float lat = -static_cast<float>(M_PI) / 2.0f + kLatEvery * latIndex;
+	//	for (uint32_t lonIndex = 0; lonIndex < kSubdivision; lonIndex++) {
 
-		for (uint32_t lonIndex = 0; lonIndex < kSubdivision; lonIndex++) {
+	//		uint32_t start = (latIndex * kSubdivision + lonIndex) * 6;
+	//		float lon = lonIndex * kLonEvery;
 
-			uint32_t start = (latIndex * kSubdivision + lonIndex) * 6;
-			float lon = lonIndex * kLonEvery;
+	//		float u0 = float(lonIndex) / float(kSubdivision);
+	//		float u1 = float(lonIndex + 1) / float(kSubdivision);
 
-			float u0 = float(lonIndex) / float(kSubdivision);
-			float u1 = float(lonIndex + 1) / float(kSubdivision);
+	//		float v0 = 1.0f - float(latIndex) / float(kSubdivision);
+	//		float v1 = 1.0f - float(latIndex + 1) / float(kSubdivision);
 
-			float v0 = 1.0f - float(latIndex) / float(kSubdivision);
-			float v1 = 1.0f - float(latIndex + 1) / float(kSubdivision);
+	//		//1a
+	//		vertexData[start].pos.x = sphere.center.x + sphere.radius * cosf(lat) * cosf(lon);
+	//		vertexData[start].pos.y = sphere.center.y + sphere.radius * sinf(lat);
+	//		vertexData[start].pos.z = sphere.center.z + sphere.radius * cosf(lat) * sinf(lon);
+	//		vertexData[start].pos.w = 1.0f;
+	//		vertexData[start].texcoord = { u0,v0 };
+	//		vertexData[start].normal.x = vertexData[start].pos.x;
+	//		vertexData[start].normal.y = vertexData[start].pos.y;
+	//		vertexData[start].normal.z = vertexData[start].pos.z;
 
-			//1a
-			vertexData[start].pos.x = sphere.center.x + sphere.radius * cosf(lat) * cosf(lon);
-			vertexData[start].pos.y = sphere.center.y + sphere.radius * sinf(lat);
-			vertexData[start].pos.z = sphere.center.z + sphere.radius * cosf(lat) * sinf(lon);
-			vertexData[start].pos.w = 1.0f;
-			vertexData[start].texcoord = { u0,v0 };
-			vertexData[start].normal.x = vertexData[start].pos.x;
-			vertexData[start].normal.y = vertexData[start].pos.y;
-			vertexData[start].normal.z = vertexData[start].pos.z;
+	//		//1b
+	//		vertexData[start + 1].pos.x = sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * cosf(lon);
+	//		vertexData[start + 1].pos.y = sphere.center.y + sphere.radius * sinf(lat + kLatEvery);
+	//		vertexData[start + 1].pos.z = sphere.center.z + sphere.radius * cosf(lat + kLatEvery) * sinf(lon);
+	//		vertexData[start + 1].pos.w = 1.0f;
+	//		vertexData[start + 1].texcoord = { u0,v1 };
+	//		vertexData[start + 1].normal.x = vertexData[start].pos.x;
+	//		vertexData[start + 1].normal.y = vertexData[start].pos.y;
+	//		vertexData[start + 1].normal.z = vertexData[start].pos.z;
 
-			//1b
-			vertexData[start + 1].pos.x = sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * cosf(lon);
-			vertexData[start + 1].pos.y = sphere.center.y + sphere.radius * sinf(lat + kLatEvery);
-			vertexData[start + 1].pos.z = sphere.center.z + sphere.radius * cosf(lat + kLatEvery) * sinf(lon);
-			vertexData[start + 1].pos.w = 1.0f;
-			vertexData[start + 1].texcoord = { u0,v1 };
-			vertexData[start + 1].normal.x = vertexData[start].pos.x;
-			vertexData[start + 1].normal.y = vertexData[start].pos.y;
-			vertexData[start + 1].normal.z = vertexData[start].pos.z;
+	//		//1c
+	//		vertexData[start + 2].pos.x = sphere.center.x + sphere.radius * cosf(lat) * cosf(lon + kLonEvery);
+	//		vertexData[start + 2].pos.y = sphere.center.y + sphere.radius * sinf(lat);
+	//		vertexData[start + 2].pos.z = sphere.center.z + sphere.radius * cosf(lat) * sinf(lon + kLonEvery);
+	//		vertexData[start + 2].pos.w = 1.0f;
+	//		vertexData[start + 2].texcoord = { u1,v0 };
+	//		vertexData[start + 2].normal.x = vertexData[start].pos.x;
+	//		vertexData[start + 2].normal.y = vertexData[start].pos.y;
+	//		vertexData[start + 2].normal.z = vertexData[start].pos.z;
 
-			//1c
-			vertexData[start + 2].pos.x = sphere.center.x + sphere.radius * cosf(lat) * cosf(lon + kLonEvery);
-			vertexData[start + 2].pos.y = sphere.center.y + sphere.radius * sinf(lat);
-			vertexData[start + 2].pos.z = sphere.center.z + sphere.radius * cosf(lat) * sinf(lon + kLonEvery);
-			vertexData[start + 2].pos.w = 1.0f;
-			vertexData[start + 2].texcoord = { u1,v0 };
-			vertexData[start + 2].normal.x = vertexData[start].pos.x;
-			vertexData[start + 2].normal.y = vertexData[start].pos.y;
-			vertexData[start + 2].normal.z = vertexData[start].pos.z;
+	//		//2b
+	//		vertexData[start + 3].pos.x = sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * cosf(lon);
+	//		vertexData[start + 3].pos.y = sphere.center.y + sphere.radius * sinf(lat + kLatEvery);
+	//		vertexData[start + 3].pos.z = sphere.center.z + sphere.radius * cosf(lat + kLatEvery) * sinf(lon);
+	//		vertexData[start + 3].pos.w = 1.0f;
+	//		vertexData[start + 3].texcoord = { u0,v1 };
+	//		vertexData[start + 3].normal.x = vertexData[start].pos.x;
+	//		vertexData[start + 3].normal.y = vertexData[start].pos.y;
+	//		vertexData[start + 3].normal.z = vertexData[start].pos.z;
 
-			//2b
-			vertexData[start + 3].pos.x = sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * cosf(lon);
-			vertexData[start + 3].pos.y = sphere.center.y + sphere.radius * sinf(lat + kLatEvery);
-			vertexData[start + 3].pos.z = sphere.center.z + sphere.radius * cosf(lat + kLatEvery) * sinf(lon);
-			vertexData[start + 3].pos.w = 1.0f;
-			vertexData[start + 3].texcoord = { u0,v1 };
-			vertexData[start + 3].normal.x = vertexData[start].pos.x;
-			vertexData[start + 3].normal.y = vertexData[start].pos.y;
-			vertexData[start + 3].normal.z = vertexData[start].pos.z;
+	//		//2d
+	//		vertexData[start + 4].pos.x = sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * cosf(lon + kLonEvery);
+	//		vertexData[start + 4].pos.y = sphere.center.y + sphere.radius * sinf(lat + kLatEvery);
+	//		vertexData[start + 4].pos.z = sphere.center.z + sphere.radius * cosf(lat + kLatEvery) * sinf(lon + kLonEvery);
+	//		vertexData[start + 4].pos.w = 1.0f;
+	//		vertexData[start + 4].texcoord = { u1,v1 };
+	//		vertexData[start + 4].normal.x = vertexData[start].pos.x;
+	//		vertexData[start + 4].normal.y = vertexData[start].pos.y;
+	//		vertexData[start + 4].normal.z = vertexData[start].pos.z;
 
-			//2d
-			vertexData[start + 4].pos.x = sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * cosf(lon + kLonEvery);
-			vertexData[start + 4].pos.y = sphere.center.y + sphere.radius * sinf(lat + kLatEvery);
-			vertexData[start + 4].pos.z = sphere.center.z + sphere.radius * cosf(lat + kLatEvery) * sinf(lon + kLonEvery);
-			vertexData[start + 4].pos.w = 1.0f;
-			vertexData[start + 4].texcoord = { u1,v1 };
-			vertexData[start + 4].normal.x = vertexData[start].pos.x;
-			vertexData[start + 4].normal.y = vertexData[start].pos.y;
-			vertexData[start + 4].normal.z = vertexData[start].pos.z;
-
-			//2c
-			vertexData[start + 5].pos.x = sphere.center.x + sphere.radius * cosf(lat) * cosf(lon + kLonEvery);
-			vertexData[start + 5].pos.y = sphere.center.y + sphere.radius * sinf(lat);
-			vertexData[start + 5].pos.z = sphere.center.z + sphere.radius * cosf(lat) * sinf(lon + kLonEvery);
-			vertexData[start + 5].pos.w = 1.0f;
-			vertexData[start + 5].texcoord = { u1,v0 };
-			vertexData[start + 5].normal.x = vertexData[start].pos.x;
-			vertexData[start + 5].normal.y = vertexData[start].pos.y;
-			vertexData[start + 5].normal.z = vertexData[start].pos.z;
-
-
-
-		}
-
-	}
-
-	//新(今までので被る部分は2を付ける、修正予定)
-
-	////wvp
-	//ID3D12Resource* wvpResource2 = CreateBufferResource(device, sizeof(TransformationMaterial));
-	//TransformationMaterial* wvpData2 = nullptr;
-	//wvpResource2->Map(0,nullptr,reinterpret_cast<void**>(&wvpData2));
+	//		//2c
+	//		vertexData[start + 5].pos.x = sphere.center.x + sphere.radius * cosf(lat) * cosf(lon + kLonEvery);
+	//		vertexData[start + 5].pos.y = sphere.center.y + sphere.radius * sinf(lat);
+	//		vertexData[start + 5].pos.z = sphere.center.z + sphere.radius * cosf(lat) * sinf(lon + kLonEvery);
+	//		vertexData[start + 5].pos.w = 1.0f;
+	//		vertexData[start + 5].texcoord = { u1,v0 };
+	//		vertexData[start + 5].normal.x = vertexData[start].pos.x;
+	//		vertexData[start + 5].normal.y = vertexData[start].pos.y;
+	//		vertexData[start + 5].normal.z = vertexData[start].pos.z;
 
 
-	//wvpData2->World = MakeIdentity4x4();
-	//wvpData2->WVP = MakeIdentity4x4();
 
+	//	}
 
-	//wvpData2->WVP = worldViewProjectionMatrix;
-	//wvpData2->World = worldMatri;
-
-
-	////リソース作成
-	//ID3D12Resource* vertexResource2= CreateBufferResource(device, sizeof(VertexData) * modelData.vertices.size());
-
-	////バッファビュー作成
-	//D3D12_VERTEX_BUFFER_VIEW vertexBufferView2{};
-	//vertexBufferView2.BufferLocation = vertexResource2->GetGPUVirtualAddress();
-	//vertexBufferView2.SizeInBytes = UINT(sizeof(VertexData) * modelData.vertices.size());
-	//vertexBufferView2.StrideInBytes = sizeof(VertexData);
-
-	////頂点データ書き込み
-	//VertexData* vertexData2 = nullptr;
-	//vertexResource2->Map(0, nullptr, reinterpret_cast<void**>(&vertexData2));
-	//std::memcpy(vertexData2,modelData.vertices.data(),sizeof(VertexData) * modelData.vertices.size());
-	std::memcpy(vertexData, modelData.vertices.data(), sizeof(VertexData)* modelData.vertices.size());
+	//}
 
 
 
@@ -1063,11 +1033,11 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			ImGui::Checkbox("useMonsterBall", &useMonsterBall);
 			ImGui::DragFloat2("UVTransform",&uvTransformSprite.translate.x,0.01f,-10.0f,10.0f);
 			ImGui::DragFloat2("UVScale",&uvTransformSprite.scale.x,0.01f,-10.0f,10.0f);
-			ImGui::SliderAngle("UVRotate",&uvTransformSprite.rotate.z);
+			ImGui::SliderAngle("UVRotate",&transformSRT.rotate.y);
 
 			#endif // USE_IMGUI
 
-			transformSRT.rotate.y += 0.01f;
+			//transformSRT.rotate.y += 0.01f;
 			worldMatri = MakeAffineMatrix(transformSRT.scale, transformSRT.rotate, transformSRT.translate);
 			worldViewProjectionMatrix = Multiply(worldMatri, Multiply(viewMatrix, projectionMatrix));
 
@@ -1109,6 +1079,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			ImGui::Render();
 
 
+
 			#endif // DEBUG
 
 
@@ -1126,7 +1097,6 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 				commandList->SetGraphicsRootConstantBufferView(1,wvpResource->GetGPUVirtualAddress());
 
-				commandList->DrawInstanced(UINT(modelData.vertices.size()), 1, 0, 0);
 
 				////commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? textureSrvHandleGPU2 : textureSrvHandleGPU);
 
@@ -1134,6 +1104,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 				commandList->SetGraphicsRootDescriptorTable(2,textureSrvHandleGPU);
 
+				commandList->DrawInstanced(UINT(modelData.vertices.size()), 1, 0, 0);
 	
 				//球
 				commandList->SetGraphicsRootConstantBufferView(0,materialResource->GetGPUVirtualAddress());
