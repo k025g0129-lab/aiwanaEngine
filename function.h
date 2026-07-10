@@ -67,8 +67,14 @@ struct DirectionalLight
 	float intensity;
 };
 
+struct MaterialData {
+	std::string textureFilrPath;
+
+};
+
 struct ModelData{
 	std::vector<VertexData> vertices;
+	MaterialData material;
 };
 
 //行列積
@@ -104,3 +110,6 @@ Matrix4x4 MakeOrthographicMatrix(float left, float top, float right, float botto
 void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color);
 
 ModelData LoadObjFile(const std::string& directoryPath, const std::string& filename);
+
+MaterialData LoadMaterialTemplateFile(const std::string& directoryPath, const std::string& filename);
+

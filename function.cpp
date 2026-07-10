@@ -390,11 +390,13 @@ ModelData LoadObjFile(const std::string& directoryPath, const std::string& filen
 				Vector3 normal = normals[elementIndices[2] - 1];
 
 				//何故かxじゃなくてyを-1倍すると資料通りになる
-				//position.x *= -1.0f;
-				position.y *= -1.0f;
-				normal.x *= -1.0f;
-				VertexData vertex = {position, texcoord, normal};
-				modelData.vertices.push_back(vertex);
+				position.x *= -1.0f;
+				
+				//normal.x *= -1.0f;
+				texcoord.y = 1.0f - texcoord.y;
+				 
+				//VertexData vertex = {position, texcoord, normal};
+				//modelData.vertices.push_back(vertex);
 				triangle[faceVertex] = { position,texcoord,normal };
 
 			}
@@ -402,7 +404,36 @@ ModelData LoadObjFile(const std::string& directoryPath, const std::string& filen
 			modelData.vertices.push_back(triangle[1]);
 			modelData.vertices.push_back(triangle[0]);
 
+		} else if(identifier == "mtllib") {
+			std::string materialFilename;
+			s >> materialFilename;
+
+			modelData.material = LoadMaterialTemplateFile(directoryPath, materialFilename);
 		}
 	}
 	return modelData;
+}
+
+MaterialData LoadMaterialTemplateFile(const std::string& directoryPath, const std::string& filename){
+
+	//変数宣言
+	MaterialData materialData;	
+	std::string line;
+	std::ifstream file(directoryPath + "/" + filename);
+	assert(file.is_open());
+
+	//materialData構築
+	while (std::getline(file,line)){
+		std::string identifier;
+		std::istringstream s(line);
+		s >> identifier;
+
+		if (identifier == "map_Kd"){
+			std::string textureFilename;
+			s >> textureFilename;
+
+			materialData.textureFilrPath = directoryPath + "/" + textureFilename;
+		}
+	}
+	return materialData;
 }
