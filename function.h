@@ -92,7 +92,7 @@ Vector3 TransformV3ToM4x4(const Vector3& vector, Matrix4x4 matrix);
 Matrix4x4 MakeRotateXMatrix(float radian); 
 
 Matrix4x4 MakeRotateYMatrix(float radian); 
-
+	
 Matrix4x4 MakeRotateZMatrix(float radian);
 
 Matrix4x4 MakeAffineMatrix(const Vector3& scale, const Vector3& rotate, const Vector3& translate);
