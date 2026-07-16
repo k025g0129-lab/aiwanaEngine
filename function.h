@@ -8,7 +8,10 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
+#include<xaudio2.h>
+#include<fstream>
 
+#pragma comment(lib,"xaudio2.lib")
 
 
 struct Vector2 {
@@ -75,6 +78,32 @@ struct MaterialData {
 struct ModelData{
 	std::vector<VertexData> vertices;
 	MaterialData material;
+};
+
+struct ChunkHeader
+{
+	char id[4];
+	int32_t size;
+};
+
+struct RiffHeader
+{
+	ChunkHeader chunk;
+	char type[4];
+};
+
+struct FormatChunk
+{
+	ChunkHeader chunk;
+	WAVEFORMATEX fmt;
+};
+
+struct SoundData
+{
+	WAVEFORMATEX wfex	;
+	BYTE* pBuffer;
+	unsigned int bufferSize;
+
 };
 
 //行列積

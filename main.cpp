@@ -14,6 +14,9 @@
 #include"function.h"
 #include"externals/DirectXTex/DirectXTex.h"
 #include<wrl.h>
+#include<xaudio2.h>
+#include<fstream>
+
 
 #ifdef USE_IMGUI
 
@@ -29,6 +32,7 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg
 #pragma comment(lib,"dxgi.lib")
 #pragma comment(lib,"dxguid.lib")
 #pragma comment(lib,"dxcompiler.lib")
+#pragma comment(lib,"xaudio2.lib")
 
 
 //ウィンドウ作成
@@ -103,7 +107,7 @@ static LONG WINAPI ExportDump(EXCEPTION_POINTERS* exception) {
 	//Dumpを出力。MiniDumpNormalは最低限の情報を出力するフラグ
 	MiniDumpWriteDump(GetCurrentProcess(), processId, dumpFileHandle, MiniDumpNormal, &minidumpInformation, nullptr, nullptr);
 
-	//他に関連づけられているSEH例外ハンドラがあれば実行。通常はプロセスを終了する
+	//他に関連づけられているSEH例外ハンドラ	があれば実行。通常はプロセスを終了する
 	return EXCEPTION_EXECUTE_HANDLER;
 }
 
@@ -352,6 +356,96 @@ struct D3DResourceLeakChecker{
 	}
 };
 
+SoundData SoundLoadWave(const char* filename) {
+	//HRESULT hr;
+
+	//ファイルオープン
+	std::ifstream file;
+	file.open(filename, std::ios_base::binary);
+	assert(file.is_open());
+
+	//データ読み込み
+	RiffHeader riff;
+	file.read((char*)&riff, sizeof(riff));
+
+	if (strncmp(riff.chunk.id,"RIFF",4) != 0){
+		assert(0);
+	}
+
+	if (strncmp(riff.type, "WAVE", 4) != 0){
+		assert(0);
+	}
+
+	FormatChunk format = {};
+
+	file.read((char*)&format, sizeof(ChunkHeader));
+
+	if (strncmp(format.chunk.id, "fmt ", 4) != 0) {
+		assert(0);
+	}
+
+	assert(format.chunk.size <= sizeof(format.fmt));
+	file.read((char*)&format.fmt, format.chunk.size);
+
+	ChunkHeader data;
+	file.read((char*)&data, sizeof(data));
+
+	if (strncmp(data.id,"JUNK", 4) == 0){
+		file.seekg(data.size, std::ios_base::cur);
+
+		file.read((char*)&data, sizeof(data));
+
+	}
+
+	if (strncmp(data.id, "data", 4) != 0){
+		assert(0);
+
+	}
+
+	char* pBuffer = new char[data.size];
+	file.read(pBuffer,data.size);
+
+	file.close();
+
+	//音声を返す
+
+	SoundData soundData = {};
+
+	soundData.wfex = format.fmt;
+	soundData.pBuffer = reinterpret_cast<BYTE*>(pBuffer);
+	soundData.bufferSize = data.size;
+
+	return soundData;
+}
+
+void SoundUnLoad(SoundData* soundData) {
+	delete[] soundData->pBuffer;
+
+	soundData->pBuffer = 0;
+	soundData->bufferSize = 0;
+	soundData->wfex = {};
+
+}
+
+void SoundPlayWave(IXAudio2* xAudio2, const SoundData& soundData) {
+
+	HRESULT hr;
+
+	IXAudio2SourceVoice* pSourceVoice = nullptr;
+	hr = xAudio2->CreateSourceVoice(&pSourceVoice, &soundData.wfex);
+	assert(SUCCEEDED(hr));
+
+	XAUDIO2_BUFFER buf{};
+	buf.pAudioData = soundData.pBuffer;
+	buf.AudioBytes = soundData.bufferSize;
+	buf.Flags = XAUDIO2_END_OF_STREAM;
+
+	hr = pSourceVoice->SubmitSourceBuffer(&buf);
+	hr = pSourceVoice->Start();
+
+	
+}
+
 
 
 int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
@@ -493,7 +587,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	D3D12_COMMAND_QUEUE_DESC commandQueueDesc{};
 	hr = device->CreateCommandQueue(&commandQueueDesc, IID_PPV_ARGS(&commandQueue));
 	assert(SUCCEEDED(hr));
-
+		
 	//コマンドアロケータ生成
 	Microsoft::WRL::ComPtr <ID3D12CommandAllocator>commandAllocator;
 	hr = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator));
@@ -1008,6 +1102,23 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	//}
 
+	//サウンド
+	Microsoft::WRL::ComPtr<IXAudio2> xAudio2;
+	IXAudio2MasteringVoice* masterVoice;
+	
+	hr = XAudio2Create(&xAudio2, 0, XAUDIO2_DEFAULT_PROCESSOR);
+
+	assert(SUCCEEDED(hr));
+
+	hr = xAudio2->CreateMasteringVoice(&masterVoice);
+
+	assert(SUCCEEDED(hr));
+
+	SoundData soundData1 = SoundLoadWave("./resources/sound/Alarm01.wav");
+
+	//音鳴らす
+	SoundPlayWave(xAudio2.Get(), soundData1);
+
 
 
 	#ifdef USE_IMGUI
@@ -1038,6 +1149,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
+		
 		}
 		else {
 
@@ -1100,6 +1212,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 
 			#endif // DEBUG
+
 
 				//描画	
 				commandList->RSSetViewports(1, &viewport);
@@ -1190,6 +1303,8 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	//解放処理
 	CloseHandle(fenceEvent);
+	xAudio2.Reset();
+	SoundUnLoad(&soundData1);
 
 	#ifdef USE_IMGUI
 
