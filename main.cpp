@@ -16,6 +16,8 @@
 #include<wrl.h>
 #include<xaudio2.h>
 #include<fstream>
+#define DIRECTINPUT_VERSION	0x0800
+#include<dinput.h>
 
 
 #ifdef USE_IMGUI
@@ -33,6 +35,9 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg
 #pragma comment(lib,"dxguid.lib")
 #pragma comment(lib,"dxcompiler.lib")
 #pragma comment(lib,"xaudio2.lib")
+#pragma comment(lib,"dinput8.lib")
+#pragma comment(lib,"dxguid.lib")
+
 
 
 //ウィンドウ作成
@@ -598,6 +603,22 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	hr = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList));
 	assert(SUCCEEDED(hr));
 
+	//DirectInputの初期化
+	IDirectInput8* directInput = nullptr;
+	hr = DirectInput8Create(wc.hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&directInput, nullptr);
+	assert(SUCCEEDED(hr));
+
+	IDirectInputDevice8* keyboard = nullptr;
+	hr = directInput->CreateDevice(GUID_SysKeyboard, &keyboard, NULL);
+	assert(SUCCEEDED(hr));
+
+	hr = keyboard->SetDataFormat(&c_dfDIKeyboard);
+	assert(SUCCEEDED(hr));
+
+	hr = keyboard->SetCooperativeLevel(hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY);
+	assert(SUCCEEDED(hr));
+
+
 	//スワップチェーン生成
 	Microsoft::WRL::ComPtr < IDXGISwapChain4> swapChain ;
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
@@ -1012,6 +1033,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	device->CreateShaderResourceView(textureResource2.Get(), &srvDesc2, textureSrvHandleCPU2);
 
 
+	
 	//球(コメントする可能性あり)
 
 	//Sphere sphere;
@@ -1119,7 +1141,9 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	//音鳴らす
 	SoundPlayWave(xAudio2.Get(), soundData1);
 
-
+	//キーボード
+	BYTE key[256] = {};
+	BYTE preKey[256] = {};
 
 	#ifdef USE_IMGUI
 	
@@ -1175,6 +1199,13 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			wvpData->World = worldMatri;
 			wvpData->WVP = worldViewProjectionMatrix;
 
+			//キーボード情報取得
+			keyboard->Acquire();
+
+			memcpy(preKey, key, 256);
+			keyboard->GetDeviceState(sizeof(key), key);
+
+				
 			//これから書き込むバックバッファのインデックスを取得
 			UINT backBufferIndex = swapChain->GetCurrentBackBufferIndex();
 
@@ -1212,6 +1243,13 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 
 			#endif // DEBUG
+
+				//更新処理
+				if (key[DIK_0] && !preKey[DIK_0] ) {
+					OutputDebugStringA("Hit 0\n");
+				}
+
+				
 
 
 				//描画	
@@ -1255,15 +1293,11 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 				//commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
 
-
 			#ifdef USE_IMGUI
 			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList.Get());
 
 
-			#endif // USE_IMGUI
-
-
-
+			#endif // USE_IMGUI			
 
 			//状態の移行
 			barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
