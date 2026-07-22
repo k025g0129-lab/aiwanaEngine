@@ -13,10 +13,12 @@ public:
 
 	Matrix4x4 GetDebugWorldMatri();
 	Matrix4x4 GetDebugWorldViewProjectionMatrix_();
+	Matrix4x4 GetDebugViewProjectionMatrix_();
 
 private:
 
-	Vector3 rotation_ = {0,0,0};
+	Matrix4x4 matRot_;
+
 	Vector3 translation_ = {0,0,-50};
 	
 	//ビュー行列
@@ -28,6 +30,8 @@ private:
 	Matrix4x4 cameraMatrix_ = MakeAffineMatrix(cameraTransformSRT_.scale, cameraTransformSRT_.rotate, cameraTransformSRT_.translate);
 	Matrix4x4 viewMatrix_ = Inverse(cameraMatrix_);
 	Matrix4x4 projectionMatrix_; 
+	Matrix4x4 viewProjectionMatrix_;
+
 	Matrix4x4 worldViewProjectionMatrix_;
 		
 };

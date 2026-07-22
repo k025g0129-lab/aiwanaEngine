@@ -1193,12 +1193,16 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			wvpData->WVP = worldViewProjectionMatrix;
 
 			#ifdef _DEBUG //デバックカメラ
+
 			if (isDebugOn){
+
 
 				debugCamera->Updata();
 				
-				wvpData->World = debugCamera->GetDebugWorldMatri();
-				wvpData->WVP = debugCamera->GetDebugWorldViewProjectionMatrix_();
+				wvpData->World = worldMatri;
+				Matrix4x4 debugWorldViewProjectionMatrix = Multiply(worldMatri, debugCamera->GetDebugViewProjectionMatrix_());
+				wvpData->WVP = debugWorldViewProjectionMatrix;
+
 
 			}
 
@@ -1266,14 +1270,14 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 				commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 				commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
 
-				commandList->SetGraphicsRootConstantBufferView(1,wvpResource->GetGPUVirtualAddress());
+				commandList->SetGraphicsRootConstantBufferView(1,wvpResource->GetGPUVirtualAddress());	
 
 
 				////commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? textureSrvHandleGPU2 : textureSrvHandleGPU);
 
-				commandList->DrawInstanced(6, 1, 0, 0);
-
 				commandList->SetGraphicsRootDescriptorTable(2,textureSrvHandleGPU);
+
+				commandList->DrawInstanced(6, 1, 0, 0);
 
 				commandList->DrawInstanced(UINT(modelData.vertices.size()), 1, 0, 0);
 	
