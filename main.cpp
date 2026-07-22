@@ -16,9 +16,8 @@
 #include<wrl.h>
 #include<xaudio2.h>
 #include<fstream>
-#define DIRECTINPUT_VERSION	0x0800
-#include<dinput.h>
-
+#include "Input.h"
+#include "DebugCamera.h"
 
 #ifdef USE_IMGUI
 
@@ -37,9 +36,7 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg
 #pragma comment(lib,"xaudio2.lib")
 #pragma comment(lib,"dinput8.lib")
 #pragma comment(lib,"dxguid.lib")
-
-
-
+	
 //ウィンドウ作成
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 
@@ -603,22 +600,6 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	hr = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList));
 	assert(SUCCEEDED(hr));
 
-	//DirectInputの初期化
-	IDirectInput8* directInput = nullptr;
-	hr = DirectInput8Create(wc.hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&directInput, nullptr);
-	assert(SUCCEEDED(hr));
-
-	IDirectInputDevice8* keyboard = nullptr;
-	hr = directInput->CreateDevice(GUID_SysKeyboard, &keyboard, NULL);
-	assert(SUCCEEDED(hr));
-
-	hr = keyboard->SetDataFormat(&c_dfDIKeyboard);
-	assert(SUCCEEDED(hr));
-
-	hr = keyboard->SetCooperativeLevel(hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY);
-	assert(SUCCEEDED(hr));
-
-
 	//スワップチェーン生成
 	Microsoft::WRL::ComPtr < IDXGISwapChain4> swapChain ;
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
@@ -964,7 +945,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	viewport.TopLeftX = 0;
 	viewport.TopLeftY = 0;
 	viewport.MinDepth = 0.0f;
-	viewport.MaxDepth = 1.0f;
+	viewport.MaxDepth = 1.0f;	
 
 	//シザー矩形
 	D3D12_RECT scissorRect{};
@@ -977,7 +958,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	TransformSRT transformSRT = { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 	TransformSRT transformSprite{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 
-	//3次元的用変数
+	//3次元的用変数	
 	TransformSRT cameraTransformSRT = { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,-10.0f} };
 	Matrix4x4 worldMatri = MakeAffineMatrix(transformSRT.scale, transformSRT.rotate, transformSRT.translate);
 	Matrix4x4 cameraMatrix = MakeAffineMatrix(cameraTransformSRT.scale, cameraTransformSRT.rotate, cameraTransformSRT.translate);
@@ -1142,8 +1123,17 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	SoundPlayWave(xAudio2.Get(), soundData1);
 
 	//キーボード
-	BYTE key[256] = {};
-	BYTE preKey[256] = {};
+	Input::GetInstance()->Initialize(wc.hInstance,hwnd);
+	Input* input = Input::GetInstance();
+
+	//デバックカメラ
+	#ifdef _DEBUG
+	DebugCamera* debugCamera = new DebugCamera();
+	debugCamera->Initialize(kClientWidth, kClientHeight, transformSRT, cameraTransformSRT);
+	bool isDebugOn = false;
+	
+	#endif 
+
 
 	#ifdef USE_IMGUI
 	
@@ -1186,6 +1176,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 			ImGui::ShowDemoWindow();
 			ImGui::Checkbox("useMonsterBall", &useMonsterBall);
+			ImGui::Checkbox("debugCamera", &isDebugOn);
 			ImGui::DragFloat2("UVTransform",&uvTransformSprite.translate.x,0.01f,-10.0f,10.0f);
 			ImGui::DragFloat2("UVScale",&uvTransformSprite.scale.x,0.01f,-10.0f,10.0f);
 			ImGui::SliderAngle("UVRotate",&transformSRT.rotate.y);
@@ -1196,16 +1187,23 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			worldMatri = MakeAffineMatrix(transformSRT.scale, transformSRT.rotate, transformSRT.translate);
 			worldViewProjectionMatrix = Multiply(worldMatri, Multiply(viewMatrix, projectionMatrix));
 
+
+
 			wvpData->World = worldMatri;
 			wvpData->WVP = worldViewProjectionMatrix;
 
-			//キーボード情報取得
-			keyboard->Acquire();
+			#ifdef _DEBUG //デバックカメラ
+			if (isDebugOn){
 
-			memcpy(preKey, key, 256);
-			keyboard->GetDeviceState(sizeof(key), key);
-
+				debugCamera->Updata();
 				
+				wvpData->World = debugCamera->GetDebugWorldMatri();
+				wvpData->WVP = debugCamera->GetDebugWorldViewProjectionMatrix_();
+
+			}
+
+			#endif 
+
 			//これから書き込むバックバッファのインデックスを取得
 			UINT backBufferIndex = swapChain->GetCurrentBackBufferIndex();
 
@@ -1234,6 +1232,8 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			ID3D12DescriptorHeap* descriptorHeaps[] = {srvDescriptorHeap.Get()};
 			commandList->SetDescriptorHeaps(1, descriptorHeaps);
 
+			Input::GetInstance()->Update();
+
 
 			#ifdef USE_IMGUI
 
@@ -1244,8 +1244,10 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 			#endif // DEBUG
 
+
+
 				//更新処理
-				if (key[DIK_0] && !preKey[DIK_0] ) {
+				if (input->PushKey(DIK_0) ) {
 					OutputDebugStringA("Hit 0\n");
 				}
 
@@ -1336,6 +1338,10 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	}
 
 	//解放処理
+	#ifdef _DEBUG
+	delete debugCamera;
+	#endif 
+
 	CloseHandle(fenceEvent);
 	xAudio2.Reset();
 	SoundUnLoad(&soundData1);
@@ -1349,9 +1355,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	#endif // USE_IMGUI
 
 
-	#ifdef _DEBUG
 
-	#endif 
 	CloseWindow(hwnd);
 
 

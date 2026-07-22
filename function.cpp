@@ -1,5 +1,16 @@
 #include "function.h"
 
+Vector3 AddV3(const Vector3& v1, const Vector3& v2){
+	Vector3 re;
+
+	re.x = v1.x + v2.x;
+	re.y = v1.y + v2.y;
+	re.z = v1.z + v2.z;
+
+
+	return re;
+}
+
 Matrix4x4 Multiply(const Matrix4x4& m1, const Matrix4x4& m2){
 	Matrix4x4 m3;
 

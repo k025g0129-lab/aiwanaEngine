@@ -106,6 +106,8 @@ struct SoundData
 
 };
 
+Vector3 AddV3(const Vector3& v1, const Vector3& v2);
+
 //行列積
 Matrix4x4 Multiply(const Matrix4x4& m1, const Matrix4x4& m2);
 
