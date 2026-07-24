@@ -13,11 +13,14 @@
 #include<dxcapi.h>
 #include"function.h"
 #include"externals/DirectXTex/DirectXTex.h"
+#include"externals/DirectXTex/d3dx12.h"
 #include<wrl.h>
 #include<xaudio2.h>
 #include<fstream>
 #include "Input.h"
 #include "DebugCamera.h"
+#include<vector>
+
 
 #ifdef USE_IMGUI
 
@@ -239,8 +242,9 @@ DirectX::ScratchImage LoadTexture(const std::string& filePath) {
 	return mipImages;
 }
 
-Microsoft::WRL::ComPtr<ID3D12Resource> CreateTextureResource(const Microsoft::WRL::ComPtr<ID3D12Device>& device,const DirectX::TexMetadata& metadata) {
-	
+
+Microsoft::WRL::ComPtr<ID3D12Resource> CreateTextureResource(ID3D12Device * device, const DirectX::TexMetadata & metadata) {
+
 	//metadataを基にResource設定
 	D3D12_RESOURCE_DESC resourceDesc{};
 	resourceDesc.Width = UINT(metadata.width);
@@ -250,48 +254,51 @@ Microsoft::WRL::ComPtr<ID3D12Resource> CreateTextureResource(const Microsoft::WR
 	resourceDesc.Format = metadata.format;
 	resourceDesc.SampleDesc.Count = 1;
 	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION(metadata.dimension);
-	
+
 	//使うHeap設定
 	D3D12_HEAP_PROPERTIES heapProperties{};
-	heapProperties.Type = D3D12_HEAP_TYPE_CUSTOM;
+	heapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;
 	heapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_BACK;
 	heapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;
 
 	//Resource生成
-	Microsoft::WRL::ComPtr <ID3D12Resource> resource;
+	Microsoft::WRL::ComPtr < ID3D12Resource> resource = nullptr;
 	HRESULT hr = device->CreateCommittedResource(
 		&heapProperties,
 		D3D12_HEAP_FLAG_NONE,
 		&resourceDesc,
-		D3D12_RESOURCE_STATE_GENERIC_READ,
+		D3D12_RESOURCE_STATE_COPY_DEST,
 		nullptr,
-		IID_PPV_ARGS(resource.GetAddressOf())
-	);
-
+		IID_PPV_ARGS(&resource));
 	assert(SUCCEEDED(hr));
 	return resource;
 
 }
 
-void UploadTextureData(Microsoft::WRL::ComPtr <ID3D12Resource>& texture, const DirectX::ScratchImage& mipImages) {
-	const DirectX::TexMetadata& metadata = mipImages.GetMetadata();
+[[nodiscard]]
+Microsoft::WRL::ComPtr < ID3D12Resource> UploadTextureData(Microsoft::WRL::ComPtr < ID3D12Resource>& texture, const DirectX::ScratchImage & mipImages, Microsoft::WRL::ComPtr < ID3D12Device>& device, ID3D12GraphicsCommandList * commandList) {
 
-	for (size_t mipLevel = 0;  mipLevel < metadata.mipLevels;  ++mipLevel){
-		
-		const DirectX::Image* img = mipImages.GetImage(mipLevel, 0, 0);
+	std::vector<D3D12_SUBRESOURCE_DATA> subresource;
+	DirectX::PrepareUpload(device, mipImages.GetImages(), mipImages.GetImageCount(), mipImages.GetMetadata(), subresource);
+	uint64_t intermediateSize = GetRequiredIntermediateSize(texture, 0, UINT(subresource.size()));
+	Microsoft::WRL::ComPtr < ID3D12Resource> intermediateResource = CreateBufferResource(device, intermediateSize);
 
-		HRESULT hr = texture->WriteToSubresource(
-			UINT(mipLevel),
-			nullptr,
-			img->pixels,
-			UINT(img->rowPitch),
-			UINT(img->slicePitch)
-		);
+	UpdateSubresources(commandList, texture, intermediateResource, 0, 0, UINT(subresource.size()), subresource.data());
 
-		assert(SUCCEEDED(hr));
+	D3D12_RESOURCE_BARRIER barrier{};
 
-	}
+	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	barrier.Transition.pResource = texture;
+	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
+	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_GENERIC_READ;
+	commandList->ResourceBarrier(1, &barrier);
+
+	return intermediateResource;
+
 }
+
 
 Microsoft::WRL::ComPtr < ID3D12Resource> CreatDepthStencilTextureResource(Microsoft::WRL::ComPtr < ID3D12Device>& device,int32_t width,int32_t height) {
 	
