@@ -260,6 +260,9 @@ Microsoft::WRL::ComPtr<ID3D12Resource> CreateTextureResource(ID3D12Device * devi
 	heapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;
 	heapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_BACK;
 	heapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;
+	heapProperties.CreationNodeMask = 1;
+	heapProperties.VisibleNodeMask = 1;
+
 
 	//Resource生成
 	Microsoft::WRL::ComPtr < ID3D12Resource> resource = nullptr;
@@ -279,17 +282,17 @@ Microsoft::WRL::ComPtr<ID3D12Resource> CreateTextureResource(ID3D12Device * devi
 Microsoft::WRL::ComPtr < ID3D12Resource> UploadTextureData(Microsoft::WRL::ComPtr < ID3D12Resource>& texture, const DirectX::ScratchImage & mipImages, Microsoft::WRL::ComPtr < ID3D12Device>& device, ID3D12GraphicsCommandList * commandList) {
 
 	std::vector<D3D12_SUBRESOURCE_DATA> subresource;
-	DirectX::PrepareUpload(device, mipImages.GetImages(), mipImages.GetImageCount(), mipImages.GetMetadata(), subresource);
-	uint64_t intermediateSize = GetRequiredIntermediateSize(texture, 0, UINT(subresource.size()));
+	DirectX::PrepareUpload(device.Get(), mipImages.GetImages(), mipImages.GetImageCount(), mipImages.GetMetadata(), subresource);
+	uint64_t intermediateSize = GetRequiredIntermediateSize(texture.Get(), 0, UINT(subresource.size()));
 	Microsoft::WRL::ComPtr < ID3D12Resource> intermediateResource = CreateBufferResource(device, intermediateSize);
 
-	UpdateSubresources(commandList, texture, intermediateResource, 0, 0, UINT(subresource.size()), subresource.data());
+	UpdateSubresources(commandList, texture.Get(), intermediateResource.Get(), 0, 0, UINT(subresource.size()), subresource.data());
 
 	D3D12_RESOURCE_BARRIER barrier{};
 
 	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	barrier.Transition.pResource = texture;
+	barrier.Transition.pResource = texture.Get();
 	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
 	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_GENERIC_READ;
@@ -985,12 +988,20 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	const DirectX::TexMetadata& metadata = mipImages.GetMetadata();
 	Microsoft::WRL::ComPtr < ID3D12Resource> textureResource = CreateTextureResource(device.Get(), metadata);
-	UploadTextureData(textureResource, mipImages);
+	Microsoft::WRL::ComPtr < ID3D12Resource> a1 = UploadTextureData(textureResource, mipImages, device,commandList.Get());
 
 	DirectX::ScratchImage mipImages2 = LoadTexture(modelData.material.textureFilrPath);
 	const DirectX::TexMetadata& metadata2 = mipImages2.GetMetadata();
 	Microsoft::WRL::ComPtr < ID3D12Resource> textureResource2 = CreateTextureResource(device.Get(), metadata2);
-	UploadTextureData(textureResource2, mipImages2);
+	Microsoft::WRL::ComPtr < ID3D12Resource> a2 = UploadTextureData(textureResource2, mipImages2, device, commandList.Get());
+
+	commandList->Close();
+
+	ID3D12CommandList* commandLists[] = {
+		commandList.Get()
+	};
+
+	commandQueue->ExecuteCommandLists(1, commandLists);
 
 	//SRV設定
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
@@ -1324,8 +1335,11 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 
 			//GPUにコマンドリストの実行を行わせる
-			ID3D12CommandList * commandLists[] = { commandList.Get()};
-			commandQueue->ExecuteCommandLists(1, commandLists);
+			ID3D12CommandList* uploadCommandLists[] ={
+				commandList.Get()
+			};
+			commandQueue->ExecuteCommandLists(1, uploadCommandLists);
+
 			//GPUとOSに画面の交換を行うよう通知する
 			swapChain->Present(1, 0);
 			//フェンス値変更
@@ -1333,10 +1347,22 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			commandQueue->Signal(fence.Get(), fenceValue);
 
 			if (fence->GetCompletedValue() < fenceValue) {
+				HANDLE event = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+
 				fence->SetEventOnCompletion(fenceValue, fenceEvent);
 
 				WaitForSingleObject(fenceEvent, INFINITE);
+
+				CloseHandle(event);
 			}
+
+			commandAllocator->Reset();
+
+			commandList->Reset(
+				commandAllocator.Get(),
+				graphicsPipelineState
+			);
+
 
 			// 次のフレーム用のコマンドリストを準備
 			hr = commandAllocator->Reset();
