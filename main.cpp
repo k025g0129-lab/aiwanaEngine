@@ -258,8 +258,8 @@ Microsoft::WRL::ComPtr<ID3D12Resource> CreateTextureResource(ID3D12Device * devi
 	//使うHeap設定
 	D3D12_HEAP_PROPERTIES heapProperties{};
 	heapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;
-	heapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_BACK;
-	heapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;
+	heapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+	heapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
 	heapProperties.CreationNodeMask = 1;
 	heapProperties.VisibleNodeMask = 1;
 
@@ -1003,6 +1003,20 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	commandQueue->ExecuteCommandLists(1, commandLists);
 
+	fenceValue++;
+	commandQueue->Signal(fence.Get(), fenceValue);
+
+	if (fence->GetCompletedValue() < fenceValue) {
+		HANDLE eventHandle = CreateEvent(nullptr, false, false, nullptr);
+		fence->SetEventOnCompletion(fenceValue, eventHandle);
+		WaitForSingleObject(eventHandle, INFINITE);
+		CloseHandle(eventHandle);
+	}
+
+	// Reset
+	commandAllocator->Reset();
+	commandList->Reset(commandAllocator.Get(), nullptr);
+
 	//SRV設定
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 	srvDesc.Format = metadata.format;
@@ -1356,20 +1370,20 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 				CloseHandle(event);
 			}
 
-			commandAllocator->Reset();
+			//commandAllocator->Reset();
 
-			commandList->Reset(
-				commandAllocator.Get(),
-				graphicsPipelineState
-			);
+			//commandList->Reset(
+			//	commandAllocator.Get(),
+			//	graphicsPipelineState
+			//);
 
 
 			// 次のフレーム用のコマンドリストを準備
 			hr = commandAllocator->Reset();
 			assert(SUCCEEDED(hr));
-			hr = commandList->Reset(commandAllocator.Get(), nullptr);
+			hr = commandList->Reset(commandAllocator.Get(), graphicsPipelineState);
 			assert(SUCCEEDED(hr));
-			
+
 		}
 
 	}
