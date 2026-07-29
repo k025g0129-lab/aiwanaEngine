@@ -48,7 +48,7 @@ struct VertexData{
 
 struct Material {
 	Vector4 color;	
-	int32_t enableLighting;
+	int32_t lightngType;
 	float padding[3];
 	Matrix4x4 uvTransform;
 };
@@ -80,31 +80,35 @@ struct ModelData{
 	MaterialData material;
 };
 
-struct ChunkHeader
-{
+struct ChunkHeader{
 	char id[4];
 	int32_t size;
 };
 
-struct RiffHeader
-{
+struct RiffHeader{
 	ChunkHeader chunk;
 	char type[4];
 };
 
-struct FormatChunk
-{
+struct FormatChunk{
 	ChunkHeader chunk;
 	WAVEFORMATEX fmt;
 };
 
-struct SoundData
-{
+struct SoundData{
 	WAVEFORMATEX wfex	;
 	BYTE* pBuffer;
 	unsigned int bufferSize;
 
 };
+
+
+enum LightingType{
+	None = 0,
+	Lambert,
+	HalfLambert
+};
+
 
 Vector3 AddV3(const Vector3& v1, const Vector3& v2);
 

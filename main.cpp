@@ -869,7 +869,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	//vertexData[5].texcoord = { 1.0f,1.0f };
 
 	materialData->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-	materialData->enableLighting = 1;
+	materialData->lightngType = 2;
 	materialData->uvTransform = MakeIdentity4x4();
 
 	wvpData->World = MakeIdentity4x4();
@@ -891,7 +891,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	directionalLightResourceSphere->SetName(L"Sphere:directionalLightResource");
 	VertexData* vertexDataSprite = nullptr;
 	Material* materialDataSprite = nullptr;
-	DirectionalLight* DirectionalLightDataSphere = nullptr;
+	DirectionalLight* directionalLightDataSphere = nullptr;
 
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferViewSprite{};
 	D3D12_INDEX_BUFFER_VIEW indexBufferViewSprite{};
@@ -906,7 +906,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	vertexResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&vertexDataSprite));
 	materialResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&materialDataSprite));
-	directionalLightResourceSphere->Map(0, nullptr, reinterpret_cast<void**>(&DirectionalLightDataSphere));
+	directionalLightResourceSphere->Map(0, nullptr, reinterpret_cast<void**>(&directionalLightDataSphere));
 	indexResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&indexDataSprite));
 
 	indexDataSprite[0] = 0;
@@ -937,12 +937,12 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	*transformationMatrixDataSprite = MakeIdentity4x4();
 
 	materialDataSprite->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-	materialDataSprite->enableLighting = false;
 	materialDataSprite->uvTransform = MakeIdentity4x4();
+	materialDataSprite->lightngType = 0;
 
-	DirectionalLightDataSphere->color = { 1.0f,1.0f,1.0f,1.0f };
-	DirectionalLightDataSphere->direction = { 0.0f,-1.0f,0.0f };
-	DirectionalLightDataSphere->intensity = 1.0f;
+	directionalLightDataSphere->color = { 1.0f,1.0f,1.0f,1.0f };
+	directionalLightDataSphere->direction = { 0.0f,-1.0f,0.0f };
+	directionalLightDataSphere->intensity = 1.0f;
 
 	uvTransformMatrix = Multiply(uvTransformMatrix, MakeRotateZMatrix(uvTransformSprite.rotate.z));
 	uvTransformMatrix = Multiply(uvTransformMatrix, MakeTranslateMatrix(uvTransformSprite.translate));
@@ -965,8 +965,9 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	scissorRect.bottom = kClientHeight;
 
 	//Transform変数作成(3D,2D)
-	TransformSRT transformSRT = { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
+	TransformSRT transformSRT = { {1.0f,1.0f,1.0f},{0.0f,3.0f,0.0f},{0.0f,0.0f,0.0f} };
 	TransformSRT transformSprite{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
+
 
 	//3次元的用変数	
 	TransformSRT cameraTransformSRT = { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,-10.0f} };
@@ -1050,93 +1051,120 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	
 	//球(コメントする可能性あり)
 
-	//Sphere sphere;
-	//sphere.center = { 0.0f,0.0f,0.0f };
-	//sphere.radius = 1.0f;
-	//const uint32_t kSubdivision = 16;
-	//const float kLonEvery = 2.0f * static_cast<float>(M_PI) / static_cast<float>(kSubdivision);
-	//const float kLatEvery = static_cast<float>(M_PI) / static_cast<float>(kSubdivision);
-	//	
-	//for (uint32_t latIndex = 0; latIndex < kSubdivision; latIndex++) {
 
-	//	float lat = -static_cast<float>(M_PI) / 2.0f + kLatEvery * latIndex;
-
-	//	for (uint32_t lonIndex = 0; lonIndex < kSubdivision; lonIndex++) {
-
-	//		uint32_t start = (latIndex * kSubdivision + lonIndex) * 6;
-	//		float lon = lonIndex * kLonEvery;
-
-	//		float u0 = float(lonIndex) / float(kSubdivision);
-	//		float u1 = float(lonIndex + 1) / float(kSubdivision);
-
-	//		float v0 = 1.0f - float(latIndex) / float(kSubdivision);
-	//		float v1 = 1.0f - float(latIndex + 1) / float(kSubdivision);
-
-	//		//1a
-	//		vertexData[start].pos.x = sphere.center.x + sphere.radius * cosf(lat) * cosf(lon);
-	//		vertexData[start].pos.y = sphere.center.y + sphere.radius * sinf(lat);
-	//		vertexData[start].pos.z = sphere.center.z + sphere.radius * cosf(lat) * sinf(lon);
-	//		vertexData[start].pos.w = 1.0f;
-	//		vertexData[start].texcoord = { u0,v0 };
-	//		vertexData[start].normal.x = vertexData[start].pos.x;
-	//		vertexData[start].normal.y = vertexData[start].pos.y;
-	//		vertexData[start].normal.z = vertexData[start].pos.z;
-
-	//		//1b
-	//		vertexData[start + 1].pos.x = sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * cosf(lon);
-	//		vertexData[start + 1].pos.y = sphere.center.y + sphere.radius * sinf(lat + kLatEvery);
-	//		vertexData[start + 1].pos.z = sphere.center.z + sphere.radius * cosf(lat + kLatEvery) * sinf(lon);
-	//		vertexData[start + 1].pos.w = 1.0f;
-	//		vertexData[start + 1].texcoord = { u0,v1 };
-	//		vertexData[start + 1].normal.x = vertexData[start].pos.x;
-	//		vertexData[start + 1].normal.y = vertexData[start].pos.y;
-	//		vertexData[start + 1].normal.z = vertexData[start].pos.z;
-
-	//		//1c
-	//		vertexData[start + 2].pos.x = sphere.center.x + sphere.radius * cosf(lat) * cosf(lon + kLonEvery);
-	//		vertexData[start + 2].pos.y = sphere.center.y + sphere.radius * sinf(lat);
-	//		vertexData[start + 2].pos.z = sphere.center.z + sphere.radius * cosf(lat) * sinf(lon + kLonEvery);
-	//		vertexData[start + 2].pos.w = 1.0f;
-	//		vertexData[start + 2].texcoord = { u1,v0 };
-	//		vertexData[start + 2].normal.x = vertexData[start].pos.x;
-	//		vertexData[start + 2].normal.y = vertexData[start].pos.y;
-	//		vertexData[start + 2].normal.z = vertexData[start].pos.z;
-
-	//		//2b
-	//		vertexData[start + 3].pos.x = sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * cosf(lon);
-	//		vertexData[start + 3].pos.y = sphere.center.y + sphere.radius * sinf(lat + kLatEvery);
-	//		vertexData[start + 3].pos.z = sphere.center.z + sphere.radius * cosf(lat + kLatEvery) * sinf(lon);
-	//		vertexData[start + 3].pos.w = 1.0f;
-	//		vertexData[start + 3].texcoord = { u0,v1 };
-	//		vertexData[start + 3].normal.x = vertexData[start].pos.x;
-	//		vertexData[start + 3].normal.y = vertexData[start].pos.y;
-	//		vertexData[start + 3].normal.z = vertexData[start].pos.z;
-
-	//		//2d
-	//		vertexData[start + 4].pos.x = sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * cosf(lon + kLonEvery);
-	//		vertexData[start + 4].pos.y = sphere.center.y + sphere.radius * sinf(lat + kLatEvery);
-	//		vertexData[start + 4].pos.z = sphere.center.z + sphere.radius * cosf(lat + kLatEvery) * sinf(lon + kLonEvery);
-	//		vertexData[start + 4].pos.w = 1.0f;
-	//		vertexData[start + 4].texcoord = { u1,v1 };
-	//		vertexData[start + 4].normal.x = vertexData[start].pos.x;
-	//		vertexData[start + 4].normal.y = vertexData[start].pos.y;
-	//		vertexData[start + 4].normal.z = vertexData[start].pos.z;
-
-	//		//2c
-	//		vertexData[start + 5].pos.x = sphere.center.x + sphere.radius * cosf(lat) * cosf(lon + kLonEvery);
-	//		vertexData[start + 5].pos.y = sphere.center.y + sphere.radius * sinf(lat);
-	//		vertexData[start + 5].pos.z = sphere.center.z + sphere.radius * cosf(lat) * sinf(lon + kLonEvery);
-	//		vertexData[start + 5].pos.w = 1.0f;
-	//		vertexData[start + 5].texcoord = { u1,v0 };
-	//		vertexData[start + 5].normal.x = vertexData[start].pos.x;
-	//		vertexData[start + 5].normal.y = vertexData[start].pos.y;
-	//		vertexData[start + 5].normal.z = vertexData[start].pos.z;
+	bool useSphere = false;
+	const uint32_t kSubdivision = 16;
 
 
+	TransformSRT transformSphere = { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 
-	//	}
+	Microsoft::WRL::ComPtr<ID3D12Resource> sphereWvpResource = CreateBufferResource(device, sizeof(TransformationMaterial));
 
-	//}
+	TransformationMaterial* sphereWvpData = nullptr;
+
+	sphereWvpResource->Map(0,nullptr,reinterpret_cast<void**>(&sphereWvpData));
+
+
+	Matrix4x4 sphereWorld =MakeAffineMatrix(transformSphere.scale,transformSphere.rotate,transformSphere.translate);
+
+	Matrix4x4 sphereWVP =Multiply(sphereWorld,Multiply(viewMatrix, projectionMatrix));
+
+	sphereWvpData->World = sphereWorld;
+	sphereWvpData->WVP = sphereWVP;
+
+	Microsoft::WRL::ComPtr < ID3D12Resource> sphereVertexResource = CreateBufferResource(device, sizeof(VertexData) * kSubdivision * kSubdivision * 6);
+	D3D12_VERTEX_BUFFER_VIEW sphereVertexBufferView{};
+	sphereVertexBufferView.BufferLocation = sphereVertexResource->GetGPUVirtualAddress();
+	sphereVertexBufferView.SizeInBytes =sizeof(VertexData) * kSubdivision * kSubdivision * 6;
+	sphereVertexBufferView.StrideInBytes = sizeof(VertexData);
+	VertexData* sphereVertexData = nullptr;
+
+	sphereVertexResource->Map(0, nullptr, reinterpret_cast<void**>(&sphereVertexData));
+
+	Sphere sphere;
+	sphere.center = { 0.0f,0.0f,0.0f };
+	sphere.radius = 1.0f;
+
+	const float kLonEvery = 2.0f * static_cast<float>(M_PI) / static_cast<float>(kSubdivision);
+	const float kLatEvery = static_cast<float>(M_PI) / static_cast<float>(kSubdivision);
+
+	for (uint32_t latIndex = 0; latIndex < kSubdivision; latIndex++) {
+
+		float lat = -static_cast<float>(M_PI) / 2.0f + kLatEvery * latIndex;
+
+		for (uint32_t lonIndex = 0; lonIndex < kSubdivision; lonIndex++) {
+
+			uint32_t start = (latIndex * kSubdivision + lonIndex) * 6;
+			float lon = lonIndex * kLonEvery;
+
+			float u0 = float(lonIndex) / float(kSubdivision);
+			float u1 = float(lonIndex + 1) / float(kSubdivision);
+
+			float v0 = 1.0f - float(latIndex) / float(kSubdivision);
+			float v1 = 1.0f - float(latIndex + 1) / float(kSubdivision);
+
+			//1a
+			sphereVertexData[start].pos.x = sphere.center.x + sphere.radius * cosf(lat) * cosf(lon);
+			sphereVertexData[start].pos.y = sphere.center.y + sphere.radius * sinf(lat);
+			sphereVertexData[start].pos.z = sphere.center.z + sphere.radius * cosf(lat) * sinf(lon);
+			sphereVertexData[start].pos.w = 1.0f;
+			sphereVertexData[start].texcoord = { u0,v0 };
+			sphereVertexData[start].normal.x = sphereVertexData[start].pos.x;
+			sphereVertexData[start].normal.y = sphereVertexData[start].pos.y;
+			sphereVertexData[start].normal.z = sphereVertexData[start].pos.z;
+
+			//1b
+			sphereVertexData[start + 1].pos.x = sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * cosf(lon);
+			sphereVertexData[start + 1].pos.y = sphere.center.y + sphere.radius * sinf(lat + kLatEvery);
+			sphereVertexData[start + 1].pos.z = sphere.center.z + sphere.radius * cosf(lat + kLatEvery) * sinf(lon);
+			sphereVertexData[start + 1].pos.w = 1.0f;
+			sphereVertexData[start + 1].texcoord = { u0,v1 };
+			sphereVertexData[start + 1].normal.x = sphereVertexData[start + 1].pos.x;
+			sphereVertexData[start + 1].normal.y = sphereVertexData[start + 1].pos.y;
+			sphereVertexData[start + 1].normal.z = sphereVertexData[start + 1].pos.z;
+
+			//1c
+			sphereVertexData[start + 2].pos.x = sphere.center.x + sphere.radius * cosf(lat) * cosf(lon + kLonEvery);
+			sphereVertexData[start + 2].pos.y = sphere.center.y + sphere.radius * sinf(lat);
+			sphereVertexData[start + 2].pos.z = sphere.center.z + sphere.radius * cosf(lat) * sinf(lon + kLonEvery);
+			sphereVertexData[start + 2].pos.w = 1.0f;
+			sphereVertexData[start + 2].texcoord = { u1,v0 };
+			sphereVertexData[start + 2].normal.x = sphereVertexData[start + 2].pos.x;
+			sphereVertexData[start + 2].normal.y = sphereVertexData[start + 2].pos.y;
+			sphereVertexData[start + 2].normal.z = sphereVertexData[start + 2].pos.z;
+
+			//2b
+			sphereVertexData[start + 3].pos.x = sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * cosf(lon);
+			sphereVertexData[start + 3].pos.y = sphere.center.y + sphere.radius * sinf(lat + kLatEvery);
+			sphereVertexData[start + 3].pos.z = sphere.center.z + sphere.radius * cosf(lat + kLatEvery) * sinf(lon);
+			sphereVertexData[start + 3].pos.w = 1.0f;
+			sphereVertexData[start + 3].texcoord = { u0,v1 };
+			sphereVertexData[start + 3].normal.x = sphereVertexData[start + 3].pos.x;
+			sphereVertexData[start + 3].normal.y = sphereVertexData[start + 3].pos.y;
+			sphereVertexData[start + 3].normal.z = sphereVertexData[start + 3].pos.z;
+
+			//2d
+			sphereVertexData[start + 4].pos.x = sphere.center.x + sphere.radius * cosf(lat + kLatEvery) * cosf(lon + kLonEvery);
+			sphereVertexData[start + 4].pos.y = sphere.center.y + sphere.radius * sinf(lat + kLatEvery);
+			sphereVertexData[start + 4].pos.z = sphere.center.z + sphere.radius * cosf(lat + kLatEvery) * sinf(lon + kLonEvery);
+			sphereVertexData[start + 4].pos.w = 1.0f;
+			sphereVertexData[start + 4].texcoord = { u1,v1 };
+			sphereVertexData[start + 4].normal.x = sphereVertexData[start + 4].pos.x;
+			sphereVertexData[start + 4].normal.y = sphereVertexData[start + 4].pos.y;
+			sphereVertexData[start + 4].normal.z = sphereVertexData[start + 4].pos.z;
+
+			//2c
+			sphereVertexData[start + 5].pos.x = sphere.center.x + sphere.radius * cosf(lat) * cosf(lon + kLonEvery);
+			sphereVertexData[start + 5].pos.y = sphere.center.y + sphere.radius * sinf(lat);
+			sphereVertexData[start + 5].pos.z = sphere.center.z + sphere.radius * cosf(lat) * sinf(lon + kLonEvery);
+			sphereVertexData[start + 5].pos.w = 1.0f;
+			sphereVertexData[start + 5].texcoord = { u1,v0 };
+			sphereVertexData[start + 5].normal.x = sphereVertexData[start + 5].pos.x;
+			sphereVertexData[start + 5].normal.y = sphereVertexData[start + 5].pos.y;
+			sphereVertexData[start + 5].normal.z = sphereVertexData[start + 5].pos.z;
+
+		}
+	}
 
 	//サウンド
 	Microsoft::WRL::ComPtr<IXAudio2> xAudio2;
@@ -1185,6 +1213,8 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	ImGuiIO& io = ImGui::GetIO();
 	io.Fonts->Build();
 
+	LightingType lightingType = HalfLambert;
+
 	//bool useMonsterBall = true;
 
 	#endif // USE_IMGUI
@@ -1206,8 +1236,6 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			ImGui_ImplDX12_NewFrame();
 			ImGui_ImplWin32_NewFrame();
 			ImGui::NewFrame();
-
-			ImGui::ShowDemoWindow();
 			//ImGui::Checkbox("useMonsterBall", &useMonsterBall);
 			//ImGui::Checkbox("debugCamera", &isDebugOn);
 			
@@ -1229,6 +1257,49 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 				ImGui::DragFloat3("OBJScale", &transformSRT.scale.x, 0.01f, -10.0f, 10.0f);
 				ImGui::TreePop();
 			}
+
+			if (ImGui::TreeNode("Sphere")) {
+				if (!useSphere){
+					if (ImGui::Button("useSphere")){
+						useSphere = true;
+					}
+				}else{
+					ImGui::DragFloat3("SphereTranslate", &transformSphere.translate.x, 0.01f, -10.0f, 10.0f);
+					ImGui::DragFloat3("SphereRotate", &transformSphere.rotate.x, 0.01f, -10.0f, 10.0f);
+					ImGui::DragFloat3("SphereScale", &transformSphere.scale.x, 0.01f, -10.0f, 10.0f);
+				}
+
+
+				ImGui::TreePop();
+			}
+
+
+
+			if (ImGui::TreeNode("Light")) {
+				ImGui::ColorEdit3("color", &directionalLightDataSphere->color.x);
+				ImGui::DragFloat3("direction", &directionalLightDataSphere->direction.x, 0.01f, -1.0f, 1.0f);
+				ImGui::DragFloat("Intensity", &directionalLightDataSphere->intensity, 0.01f, 0.0f, 10.0f);
+
+				const char* items[] =
+				{
+					"None",
+					"Lambert",
+					"Half Lambert"
+				};
+
+
+				ImGui::Combo("Lighting Type",
+					(int*) &lightingType,
+					items,
+					IM_ARRAYSIZE(items));
+				//ImGui::Combo("Lighting Type",&lightingType,3);
+				ImGui::TreePop();
+
+			}
+
+			materialData->lightngType = lightingType;
+
+
 			#endif // USE_IMGUI
 
 			//transformSRT.rotate.y += 0.01f;
@@ -1244,13 +1315,23 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			uvTransformMatrix = Multiply(uvTransformMatrix, MakeRotateZMatrix(uvTransformSprite.rotate.z));
 			uvTransformMatrix = Multiply(uvTransformMatrix, MakeTranslateMatrix(uvTransformSprite.translate));
 
+			//球
+			sphereWvpResource->Map(0, nullptr, reinterpret_cast<void**>(&sphereWvpData));
+			sphereWorld = MakeAffineMatrix(transformSphere.scale, transformSphere.rotate, transformSphere.translate);
+			sphereWVP = Multiply(sphereWorld, Multiply(viewMatrix, projectionMatrix));
+
+			//directionalLightDataSphere->direction = Normalize(directionalLightDataSphere->direction);
 
 			wvpData->World = worldMatri;
 			wvpData->WVP = worldViewProjectionMatrix;
 
+
 			*transformationMatrixDataSprite = worldViewProjectionMatrixSprite;
 
 			materialDataSprite->uvTransform = uvTransformMatrix;
+
+			sphereWvpData->World = sphereWorld;
+			sphereWvpData->WVP = sphereWVP;
 
 
 			#ifdef _DEBUG //デバックカメラ
@@ -1344,10 +1425,15 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 				commandList->DrawInstanced(UINT(modelData.vertices.size()), 1, 0, 0);
 	
 				//球
-				commandList->SetGraphicsRootConstantBufferView(0,materialResource->GetGPUVirtualAddress());
-				//commandList->SetGraphicsRootConstantBufferView(3, directionalLightResourceSphere->GetGPUVirtualAddress());
 
-				//commandList->DrawInstanced(kSubdivision * kSubdivision * 6, 1, 0, 0);
+				if (useSphere){
+					commandList->IASetVertexBuffers(0, 1, &sphereVertexBufferView);
+					commandList->SetGraphicsRootConstantBufferView(1,sphereWvpResource->GetGPUVirtualAddress());
+					//commandList->SetGraphicsRootConstantBufferView(3, directionalLightResourceSphere->GetGPUVirtualAddress());
+
+					commandList->DrawInstanced(kSubdivision * kSubdivision * 6, 1, 0, 0);
+				}
+
 
 
 				////2D

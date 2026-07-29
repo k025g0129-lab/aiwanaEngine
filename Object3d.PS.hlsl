@@ -7,7 +7,7 @@ SamplerState gSampler : register(s0);
 
 struct Material{
     float32_t4 color;
-    int32_t enableLighting;
+    int32_t lightngType;
     float32_t4x4 uvTransform;
 };
 
@@ -40,18 +40,46 @@ PixelShaderOutput main(VertexShaderOutput input){
     output.color = gMaterial.color * textureColor;
     
     
-    if (gMaterial.enableLighting != 0){
-        
-        float Ndotl = dot(normalize(input.normal), -gDirectionalLight.direction);
-        float cos = pow(Ndotl * 0.5f + 0.5f, 2.0f);
-        
-        output.color = gMaterial.color * textureColor * gDirectionalLight.color * cos * gDirectionalLight.intensity;
-        
-    } else {
-        
+    
+    
+    if (gMaterial.lightngType == 0)
+    {
+    // None
         output.color = gMaterial.color * textureColor;
-        
-        }
+    }
+    else if (gMaterial.lightngType == 1)
+    {
+    // Lambert
+
+        float NdotL =
+        saturate(dot(normalize(input.normal),
+                     -gDirectionalLight.direction));
+
+        output.color =
+        gMaterial.color *
+        textureColor *
+        gDirectionalLight.color *
+        NdotL *
+        gDirectionalLight.intensity;
+    }
+    else if (gMaterial.lightngType == 2)
+    {
+    // Half Lambert
+
+        float NdotL =
+        dot(normalize(input.normal),
+            -gDirectionalLight.direction);
+
+        float diffuse =
+        pow(NdotL * 0.5f + 0.5f, 2.0f);
+
+        output.color =
+        gMaterial.color *
+        textureColor *
+        gDirectionalLight.color *
+        diffuse *
+        gDirectionalLight.intensity;
+    }
     
     
 
