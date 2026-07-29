@@ -964,7 +964,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	scissorRect.top = 0;
 	scissorRect.bottom = kClientHeight;
 
-	//Transform変数作成
+	//Transform変数作成(3D,2D)
 	TransformSRT transformSRT = { {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 	TransformSRT transformSprite{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 
@@ -978,6 +978,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	wvpData->WVP = worldViewProjectionMatrix;
 	wvpData->World = worldMatri;
 
+	//2次元的用変数	
 	Matrix4x4 worldMatriSprite = MakeAffineMatrix(transformSprite.scale, transformSprite.rotate, transformSprite.translate);
 	Matrix4x4 viewMatrixSprite = MakeIdentity4x4();
 	Matrix4x4 projectionMatrixSprite = MakeOrthographicMatrix(0.0f, 0.0f, float(kClientWidth), float(kClientHeight), 0.0f, 100.0f);
@@ -1184,7 +1185,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	ImGuiIO& io = ImGui::GetIO();
 	io.Fonts->Build();
 
-	bool useMonsterBall = true;
+	//bool useMonsterBall = true;
 
 	#endif // USE_IMGUI
 
@@ -1207,22 +1208,50 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			ImGui::NewFrame();
 
 			ImGui::ShowDemoWindow();
-			ImGui::Checkbox("useMonsterBall", &useMonsterBall);
-			ImGui::Checkbox("debugCamera", &isDebugOn);
-			ImGui::DragFloat2("UVTransform",&uvTransformSprite.translate.x,0.01f,-10.0f,10.0f);
-			ImGui::DragFloat2("UVScale",&uvTransformSprite.scale.x,0.01f,-10.0f,10.0f);
-			ImGui::SliderAngle("UVRotate",&transformSRT.rotate.y);
+			//ImGui::Checkbox("useMonsterBall", &useMonsterBall);
+			//ImGui::Checkbox("debugCamera", &isDebugOn);
+			
+			
+			if (ImGui::TreeNode("2D")) {
+				ImGui::DragFloat3("SpriteTransform", &transformSprite.translate.x, 0.1f);
+				ImGui::DragFloat3("SpriteRotate", &transformSprite.rotate.x, 0.01f, -10.0f, 10.0f);
+				ImGui::DragFloat3("SpriteScale", &transformSprite.scale.x, 0.01f, -10.0f, 10.0f);
 
+				ImGui::DragFloat2("UVTransform", &uvTransformSprite.translate.x, 0.01f, -10.0f, 10.0f);
+				ImGui::DragFloat2("UVScale", &uvTransformSprite.scale.x, 0.01f, -10.0f, 10.0f);
+				ImGui::SliderAngle("UVRotate", &uvTransformSprite.rotate.z);
+				ImGui::TreePop();
+			}
+
+			if (ImGui::TreeNode("OBJ")) {
+				ImGui::DragFloat3("OBJTranslate", &transformSRT.translate.x, 0.01f, -10.0f, 10.0f);
+				ImGui::DragFloat3("OBJRotate", &transformSRT.rotate.x, 0.01f, -10.0f, 10.0f);
+				ImGui::DragFloat3("OBJScale", &transformSRT.scale.x, 0.01f, -10.0f, 10.0f);
+				ImGui::TreePop();
+			}
 			#endif // USE_IMGUI
 
 			//transformSRT.rotate.y += 0.01f;
+			//3D
 			worldMatri = MakeAffineMatrix(transformSRT.scale, transformSRT.rotate, transformSRT.translate);
 			worldViewProjectionMatrix = Multiply(worldMatri, Multiply(viewMatrix, projectionMatrix));
 
+			//2D
+			worldMatriSprite = MakeAffineMatrix(transformSprite.scale, transformSprite.rotate, transformSprite.translate);
+			worldViewProjectionMatrixSprite = Multiply(worldMatriSprite, Multiply(viewMatrixSprite, projectionMatrixSprite));
+
+			uvTransformMatrix = MakeScaleMatrix(uvTransformSprite.scale);
+			uvTransformMatrix = Multiply(uvTransformMatrix, MakeRotateZMatrix(uvTransformSprite.rotate.z));
+			uvTransformMatrix = Multiply(uvTransformMatrix, MakeTranslateMatrix(uvTransformSprite.translate));
 
 
 			wvpData->World = worldMatri;
 			wvpData->WVP = worldViewProjectionMatrix;
+
+			*transformationMatrixDataSprite = worldViewProjectionMatrixSprite;
+
+			materialDataSprite->uvTransform = uvTransformMatrix;
+
 
 			#ifdef _DEBUG //デバックカメラ
 
@@ -1300,7 +1329,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			
 
 				commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-				commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
+				commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
 
 				commandList->SetGraphicsRootConstantBufferView(1,wvpResource->GetGPUVirtualAddress());	
 
@@ -1308,6 +1337,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 				////commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? textureSrvHandleGPU2 : textureSrvHandleGPU);
 
 				commandList->SetGraphicsRootDescriptorTable(2,textureSrvHandleGPU);
+				commandList->SetGraphicsRootConstantBufferView(3, directionalLightResourceSphere->GetGPUVirtualAddress());
 
 				commandList->DrawInstanced(6, 1, 0, 0);
 
@@ -1315,20 +1345,19 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	
 				//球
 				commandList->SetGraphicsRootConstantBufferView(0,materialResource->GetGPUVirtualAddress());
-				commandList->SetGraphicsRootConstantBufferView(3, directionalLightResourceSphere->GetGPUVirtualAddress());
+				//commandList->SetGraphicsRootConstantBufferView(3, directionalLightResourceSphere->GetGPUVirtualAddress());
 
 				//commandList->DrawInstanced(kSubdivision * kSubdivision * 6, 1, 0, 0);
 
 
-				
 				////2D
-				//commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
+				commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
 				////commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
-				//commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
-				//commandList->IASetIndexBuffer(&indexBufferViewSprite);
-				//commandList->SetGraphicsRootConstantBufferView(1,transformationMatrixResourceSprite->GetGPUVirtualAddress());
+				commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
+				commandList->IASetIndexBuffer(&indexBufferViewSprite);
+				commandList->SetGraphicsRootConstantBufferView(1,transformationMatrixResourceSprite->GetGPUVirtualAddress());
 				////commandList->DrawInstanced(6, 1, 0, 0);
-				//commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
+				commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
 
 			#ifdef USE_IMGUI
