@@ -91,6 +91,19 @@ PixelShaderOutput main(VertexShaderOutput input){
 
     }
     
+    if (textureColor.a == 0.0){
+        discard;
+    }
+    
+    if (textureColor.a <= 0.5){
+        discard;
+    }
+    
+    if (output.color.a == 0.0){
+        discard;
+    }
+        
+    
     
 
     
