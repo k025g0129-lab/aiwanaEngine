@@ -44,10 +44,11 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg
 //ウィンドウ作成
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 
+#ifdef USE_IMGUI
 	if (ImGui_ImplWin32_WndProcHandler(hwnd,msg,wparam,lparam)){
 		return true;
 	}
-
+#endif // 
 
 	switch (msg) {
 
@@ -594,6 +595,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	//バグらせ用
 	//uint32_t* p = nullptr;
 	//*p = 100;
+	assert(false && "assertのテスト");
 
 	//コマンドキュー生成
 	Microsoft::WRL::ComPtr < ID3D12CommandQueue> commandQueue ;
