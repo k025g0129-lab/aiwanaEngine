@@ -52,8 +52,7 @@ PixelShaderOutput main(VertexShaderOutput input){
     // Lambert
 
         float NdotL =
-        saturate(dot(normalize(input.normal),
-                     -gDirectionalLight.direction));
+        saturate(dot(normalize(input.normal),-gDirectionalLight.direction));
 
         output.color.rgb =
         gMaterial.color.rgb *
@@ -90,7 +89,7 @@ PixelShaderOutput main(VertexShaderOutput input){
         textureColor.a;
 
     }
-    
+        
     if (textureColor.a == 0.0){
         discard;
     }

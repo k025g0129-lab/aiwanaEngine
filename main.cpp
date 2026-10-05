@@ -779,7 +779,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
 	blendDesc.RenderTarget[0].BlendEnable = TRUE;
 	blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;	
-	blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+	blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;	
 	blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
 	blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
 	blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
@@ -823,8 +823,9 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	assert(SUCCEEDED(hr));
 
 
-	//読み込み
-	ModelData modelData = LoadObjFile("resources", "plane.obj");
+	//OBJ読み込み
+	ModelData modelData = LoadObjFile("resources/fence", "fence.obj");
+	//ModelData modelData2 = LoadObjFile("resources", "plane.obj");
 
 	//マテリアル用に変更
 	Microsoft::WRL::ComPtr < ID3D12Resource> vertexResource = CreateBufferResource(device, sizeof(VertexData) * modelData.vertices.size());
@@ -994,8 +995,8 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	Matrix4x4 worldViewProjectionMatrixSprite = Multiply(worldMatriSprite, Multiply(viewMatrixSprite, projectionMatrixSprite));
 	*transformationMatrixDataSprite = worldViewProjectionMatrixSprite;
 
+	//何のテクスチャを貼るか
 	DirectX::ScratchImage mipImages = LoadTexture("resources/uvChecker.png");
-
 	const DirectX::TexMetadata& metadata = mipImages.GetMetadata();
 	Microsoft::WRL::ComPtr < ID3D12Resource> textureResource = CreateTextureResource(device.Get(), metadata);
 	Microsoft::WRL::ComPtr < ID3D12Resource> a1 = UploadTextureData(textureResource, mipImages, device,commandList.Get());
@@ -1427,10 +1428,10 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 				////commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? textureSrvHandleGPU2 : textureSrvHandleGPU);
 
-				commandList->SetGraphicsRootDescriptorTable(2,textureSrvHandleGPU);
+				commandList->SetGraphicsRootDescriptorTable(2,textureSrvHandleGPU2);
 				commandList->SetGraphicsRootConstantBufferView(3, directionalLightResourceSphere->GetGPUVirtualAddress());
 
-				commandList->DrawInstanced(6, 1, 0, 0);
+				//commandList->DrawInstanced(6, 1, 0, 0);
 
 				commandList->DrawInstanced(UINT(modelData.vertices.size()), 1, 0, 0);
 	
