@@ -285,6 +285,9 @@ Microsoft::WRL::ComPtr < ID3D12Resource> UploadTextureData(Microsoft::WRL::ComPt
 	std::vector<D3D12_SUBRESOURCE_DATA> subresource;
 	DirectX::PrepareUpload(device.Get(), mipImages.GetImages(), mipImages.GetImageCount(), mipImages.GetMetadata(), subresource);
 	uint64_t intermediateSize = GetRequiredIntermediateSize(texture.Get(), 0, UINT(subresource.size()));
+
+
+
 	Microsoft::WRL::ComPtr < ID3D12Resource> intermediateResource = CreateBufferResource(device, intermediateSize);
 
 	UpdateSubresources(commandList, texture.Get(), intermediateResource.Get(), 0, 0, UINT(subresource.size()), subresource.data());
@@ -698,8 +701,9 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	assert(SUCCEEDED(hr));
 
 	//RootSignature作成
-	D3D12_ROOT_SIGNATURE_DESC descriptionRootSignature{};
-	descriptionRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+	//Object3D用
+	D3D12_ROOT_SIGNATURE_DESC descriptionRootSignatureOb3{};
+	descriptionRootSignatureOb3.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
 	D3D12_DESCRIPTOR_RANGE descriptorRange[1] = {};
 	descriptorRange[0].BaseShaderRegister = 0;
@@ -707,22 +711,43 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	descriptorRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	descriptorRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-	D3D12_ROOT_PARAMETER rootParameters[4] = {};
-	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-	rootParameters[0].Descriptor.ShaderRegister = 0;
-	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
-	rootParameters[1].Descriptor.ShaderRegister = 0;
-	rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-	rootParameters[2].DescriptorTable.pDescriptorRanges = descriptorRange;
-	rootParameters[2].DescriptorTable.NumDescriptorRanges = _countof(descriptorRange);
-	rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-	rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-	rootParameters[3].Descriptor.ShaderRegister = 1;
-	descriptionRootSignature.pParameters = rootParameters;
-	descriptionRootSignature.NumParameters = _countof(rootParameters);
+	D3D12_ROOT_PARAMETER rootParametersOb3[4] = {};
+	rootParametersOb3[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParametersOb3[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	rootParametersOb3[0].Descriptor.ShaderRegister = 0;
+	rootParametersOb3[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParametersOb3[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+	rootParametersOb3[1].Descriptor.ShaderRegister = 0;
+	rootParametersOb3[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParametersOb3[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	rootParametersOb3[2].DescriptorTable.pDescriptorRanges = descriptorRange;
+	rootParametersOb3[2].DescriptorTable.NumDescriptorRanges = _countof(descriptorRange);
+	rootParametersOb3[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParametersOb3[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	rootParametersOb3[3].Descriptor.ShaderRegister = 1;
+
+	descriptionRootSignatureOb3.pParameters = rootParametersOb3;
+	descriptionRootSignatureOb3.NumParameters = _countof(rootParametersOb3);
+
+	//RootSignature作成
+	//Particle用
+	D3D12_ROOT_PARAMETER rootParametersPar[4] = {};
+	D3D12_ROOT_SIGNATURE_DESC descriptionRootSignaturePar{};
+	descriptionRootSignaturePar.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+
+	D3D12_DESCRIPTOR_RANGE descriptorRangeForInstancing[1] = {};
+	descriptorRangeForInstancing[0].BaseShaderRegister = 0;
+	descriptorRangeForInstancing[0].NumDescriptors = 1;
+	descriptorRangeForInstancing[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	descriptorRangeForInstancing[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	rootParametersPar[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParametersPar[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+	rootParametersPar[1].DescriptorTable.pDescriptorRanges = descriptorRangeForInstancing;
+	rootParametersPar[1].DescriptorTable.NumDescriptorRanges = _countof(descriptorRangeForInstancing);
+
+	descriptionRootSignaturePar.pParameters = rootParametersOb3;
+	descriptionRootSignaturePar.NumParameters = _countof(rootParametersOb3);
 
 
 	//Sampler設定
@@ -735,14 +760,14 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	staticSamplers[0].MaxLOD = D3D12_FLOAT32_MAX;
 	staticSamplers[0].ShaderRegister = 0;
 	staticSamplers[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-	descriptionRootSignature.pStaticSamplers = staticSamplers;
-	descriptionRootSignature.NumStaticSamplers = _countof(staticSamplers);
+	descriptionRootSignatureOb3.pStaticSamplers = staticSamplers;
+	descriptionRootSignatureOb3.NumStaticSamplers = _countof(staticSamplers);
 
 
 
 	ID3DBlob* signatureBlob = nullptr;
 	ID3DBlob* errorBlob = nullptr;
-	hr = D3D12SerializeRootSignature(&descriptionRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
+	hr = D3D12SerializeRootSignature(&descriptionRootSignatureOb3, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
 
 	if (FAILED(hr)) {
 		LOG("{}", reinterpret_cast<char*>(errorBlob->GetBufferPointer()));
@@ -833,6 +858,11 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	Microsoft::WRL::ComPtr < ID3D12Resource> materialResource = CreateBufferResource(device, sizeof(Material));
 	Microsoft::WRL::ComPtr < ID3D12Resource> wvpResource = CreateBufferResource(device, sizeof(TransformationMaterial));
 
+	const uint32_t kNumInstance = 10;
+
+	Microsoft::WRL::ComPtr < ID3D12Resource>instancingResource = CreateBufferResource(device, sizeof(TransformationMaterial) * kNumInstance);
+
+
 
 	//頂点バッファビュー作成
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
@@ -844,12 +874,20 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	VertexData* vertexData = nullptr;
 	Material* materialData = nullptr;
 	TransformationMaterial* wvpData = nullptr;
+	TransformationMaterial* instancingData = nullptr;
 		
 	vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
 	materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData));
 	wvpResource->Map(0, nullptr, reinterpret_cast<void**>(&wvpData));
+	instancingResource->Map(0, nullptr, reinterpret_cast<void**>(&instancingData));
 
 	std::memcpy(vertexData, modelData.vertices.data(), sizeof(VertexData) * modelData.vertices.size());
+
+	for (uint32_t index = 0; index < kNumInstance; index++){
+		instancingData[index].WVP = MakeIdentity4x4();
+		instancingData[index].World = MakeIdentity4x4();
+
+	}
 
 	//封印
 	////1枚目
@@ -1043,6 +1081,16 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	srvDesc2.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	srvDesc2.Texture2D.MipLevels = UINT(metadata2.mipLevels);
 
+	//複数個
+	D3D12_SHADER_RESOURCE_VIEW_DESC instancingSrvDesc{};
+	instancingSrvDesc.Format = DXGI_FORMAT_UNKNOWN;
+	instancingSrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	instancingSrvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+	instancingSrvDesc.Buffer.FirstElement = 0;
+	instancingSrvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+	instancingSrvDesc.Buffer.NumElements = kNumInstance;
+	instancingSrvDesc.Buffer.StructureByteStride = sizeof(TransformationMaterial);
+
 
 	const uint32_t desriptorSizeSRV = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	//const uint32_t desriptorSizeRTV = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
@@ -1054,9 +1102,12 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	D3D12_CPU_DESCRIPTOR_HANDLE textureSrvHandleCPU2 = GetCPUDescriptorHandle(srvDescriptorHeap, desriptorSizeSRV, 2);
 	D3D12_GPU_DESCRIPTOR_HANDLE textureSrvHandleGPU2 = GetGPUDescriptorHandle(srvDescriptorHeap, desriptorSizeSRV, 2);
 
+	D3D12_CPU_DESCRIPTOR_HANDLE instancingSrvHandleCPU = GetCPUDescriptorHandle(srvDescriptorHeap, desriptorSizeSRV, 3);
+	D3D12_GPU_DESCRIPTOR_HANDLE instancingSrvHandleGPU = GetGPUDescriptorHandle(srvDescriptorHeap, desriptorSizeSRV, 3);
+
 	device->CreateShaderResourceView(textureResource.Get(), &srvDesc, textureSrvHandleCPU);
 	device->CreateShaderResourceView(textureResource2.Get(), &srvDesc2, textureSrvHandleCPU2);
-
+	device->CreateShaderResourceView(instancingResource.Get(), &instancingSrvDesc, textureSrvHandleCPU);
 
 	
 	//球(コメントする可能性あり)
@@ -1175,6 +1226,27 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		}
 	}
+
+
+	//板ポリ10個
+	TransformSRT transforms[kNumInstance];
+
+
+	for (uint32_t index = 0; index < kNumInstance; index++) {
+		transforms[index].scale = { 1.0f,1.0f,1.0f };
+		transforms[index].rotate = { 0.0f,0.0f,0.0f };
+		transforms[index].translate = { index * 0.1f,index * 0.1f,index * 0.1f };
+
+	}
+
+	for (uint32_t index = 0; index < kNumInstance; index++) {
+		Matrix4x4 worldMatrix = MakeAffineMatrix(transforms[index].scale, transforms[index].rotate, transforms[index].translate);
+		Matrix4x4 worldViewProjectionMatrix2 = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
+		instancingData[index].WVP = worldViewProjectionMatrix2;
+		instancingData[index].World = worldMatrix;
+	
+	}
+
 
 	//サウンド
 	Microsoft::WRL::ComPtr<IXAudio2> xAudio2;
@@ -1434,7 +1506,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 				//commandList->DrawInstanced(6, 1, 0, 0);
 
-				commandList->DrawInstanced(UINT(modelData.vertices.size()), 1, 0, 0);
+				commandList->DrawInstanced(UINT(modelData.vertices.size()), 10, 0, 0);
 	
 				//球
 
