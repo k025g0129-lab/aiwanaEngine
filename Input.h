@@ -5,6 +5,7 @@
 class Input {
 public:
 
+
     static Input* GetInstance();
 
     void Initialize(HINSTANCE hInstance, HWND hwnd);
