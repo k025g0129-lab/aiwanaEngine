@@ -631,7 +631,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	Microsoft::WRL::ComPtr < ID3D12DescriptorHeap>rtvDescriptorHeap = CreateDescriptorHeap(device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2, false);
 
 	//ImGui用生成
-	Microsoft::WRL::ComPtr < ID3D12DescriptorHeap>srvDescriptorHeap = CreateDescriptorHeap(device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 3, true);
+	Microsoft::WRL::ComPtr < ID3D12DescriptorHeap>srvDescriptorHeap = CreateDescriptorHeap(device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 4, true);
 
 	//DSV用
 	Microsoft::WRL::ComPtr < ID3D12DescriptorHeap>dsvDescriptorHeap = CreateDescriptorHeap(device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1, false);
@@ -741,13 +741,17 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	descriptorRangeForInstancing[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	descriptorRangeForInstancing[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
+	rootParametersPar[0] = rootParametersOb3[0];
 	rootParametersPar[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	rootParametersPar[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
 	rootParametersPar[1].DescriptorTable.pDescriptorRanges = descriptorRangeForInstancing;
 	rootParametersPar[1].DescriptorTable.NumDescriptorRanges = _countof(descriptorRangeForInstancing);
+	rootParametersPar[2] = rootParametersOb3[2];
+	rootParametersPar[3] = rootParametersOb3[3];
 
-	descriptionRootSignaturePar.pParameters = rootParametersOb3;
-	descriptionRootSignaturePar.NumParameters = _countof(rootParametersOb3);
+
+	descriptionRootSignaturePar.pParameters = rootParametersPar;
+	descriptionRootSignaturePar.NumParameters = _countof(rootParametersPar);
 
 
 	//Sampler設定
@@ -763,21 +767,38 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	descriptionRootSignatureOb3.pStaticSamplers = staticSamplers;
 	descriptionRootSignatureOb3.NumStaticSamplers = _countof(staticSamplers);
 
+	descriptionRootSignaturePar.pStaticSamplers = staticSamplers;
+	descriptionRootSignaturePar.NumStaticSamplers = _countof(staticSamplers);
 
-
-	ID3DBlob* signatureBlob = nullptr;
-	ID3DBlob* errorBlob = nullptr;
-	hr = D3D12SerializeRootSignature(&descriptionRootSignatureOb3, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
+	ID3DBlob* signatureBlobOb3 = nullptr;
+	ID3DBlob* errorBlobOb3 = nullptr;
+	hr = D3D12SerializeRootSignature(&descriptionRootSignatureOb3, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlobOb3, &errorBlobOb3);
 
 	if (FAILED(hr)) {
-		LOG("{}", reinterpret_cast<char*>(errorBlob->GetBufferPointer()));
+		LOG("{}", reinterpret_cast<char*>(errorBlobOb3->GetBufferPointer()));
 		assert(false);
 
 	}
 
-	ID3D12RootSignature* rootSignature = nullptr;
-	hr = device->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
+	ID3D12RootSignature* rootSignatureOb3 = nullptr;
+	hr = device->CreateRootSignature(0, signatureBlobOb3->GetBufferPointer(), signatureBlobOb3->GetBufferSize(), IID_PPV_ARGS(&rootSignatureOb3));
 	assert(SUCCEEDED(hr));
+
+
+	ID3DBlob* signatureBlobPar = nullptr;
+	ID3DBlob* errorBlobPar = nullptr;
+	hr = D3D12SerializeRootSignature(&descriptionRootSignaturePar, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlobPar, &errorBlobPar);
+
+	if (FAILED(hr)) {
+		LOG("{}", reinterpret_cast<char*>(errorBlobPar->GetBufferPointer()));
+		assert(false);
+
+	}
+
+	ID3D12RootSignature* rootSignaturePar = nullptr;
+	hr = device->CreateRootSignature(0, signatureBlobPar->GetBufferPointer(), signatureBlobPar->GetBufferSize(), IID_PPV_ARGS(&rootSignaturePar));
+	assert(SUCCEEDED(hr));
+
 
 	//InputLayout
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[3] = {};
@@ -825,7 +846,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	//PSO生成
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPipelineStateDesc{};
-	graphicsPipelineStateDesc.pRootSignature = rootSignature;
+	graphicsPipelineStateDesc.pRootSignature = rootSignatureOb3;
 	graphicsPipelineStateDesc.InputLayout = inputLayoutDesc;
 	graphicsPipelineStateDesc.VS = { vertexShaderBlob->GetBufferPointer(),vertexShaderBlob->GetBufferSize() };
 
@@ -846,6 +867,59 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	ID3D12PipelineState* graphicsPipelineState = nullptr;
 	hr = device->CreateGraphicsPipelineState(&graphicsPipelineStateDesc, IID_PPV_ARGS(&graphicsPipelineState));
+	assert(SUCCEEDED(hr));
+
+	// Particle Shaderコンパイル
+	IDxcBlob* particleVertexShaderBlob =
+		CompileShader(
+			L"Particle.VS.hlsl",
+			L"vs_6_0",
+			dxcUtils,
+			dxcCompiler,
+			includeHandler
+		);
+
+	assert(particleVertexShaderBlob != nullptr);
+
+	IDxcBlob* particlePixelShaderBlob =
+		CompileShader(
+			L"Particle.PS.hlsl",
+			L"ps_6_0",
+			dxcUtils,
+			dxcCompiler,
+			includeHandler
+		);
+
+	assert(particlePixelShaderBlob != nullptr);
+
+
+	// Object3D用PSOをコピーしてParticle用に変更
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC
+		graphicsPipelineStateDescPar =
+		graphicsPipelineStateDesc;
+
+	graphicsPipelineStateDescPar.pRootSignature =
+		rootSignaturePar;
+
+	graphicsPipelineStateDescPar.VS = {
+		particleVertexShaderBlob->GetBufferPointer(),
+		particleVertexShaderBlob->GetBufferSize()
+	};
+
+	graphicsPipelineStateDescPar.PS = {
+		particlePixelShaderBlob->GetBufferPointer(),
+		particlePixelShaderBlob->GetBufferSize()
+	};
+
+
+	ID3D12PipelineState* graphicsPipelineStatePar =
+		nullptr;
+
+	hr = device->CreateGraphicsPipelineState(
+		&graphicsPipelineStateDescPar,
+		IID_PPV_ARGS(&graphicsPipelineStatePar)
+	);
+
 	assert(SUCCEEDED(hr));
 
 
@@ -1107,7 +1181,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	device->CreateShaderResourceView(textureResource.Get(), &srvDesc, textureSrvHandleCPU);
 	device->CreateShaderResourceView(textureResource2.Get(), &srvDesc2, textureSrvHandleCPU2);
-	device->CreateShaderResourceView(instancingResource.Get(), &instancingSrvDesc, textureSrvHandleCPU);
+	device->CreateShaderResourceView(instancingResource.Get(), &instancingSrvDesc, instancingSrvHandleCPU);
 
 	
 	//球(コメントする可能性あり)
@@ -1239,13 +1313,6 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	}
 
-	for (uint32_t index = 0; index < kNumInstance; index++) {
-		Matrix4x4 worldMatrix = MakeAffineMatrix(transforms[index].scale, transforms[index].rotate, transforms[index].translate);
-		Matrix4x4 worldViewProjectionMatrix2 = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
-		instancingData[index].WVP = worldViewProjectionMatrix2;
-		instancingData[index].World = worldMatrix;
-	
-	}
 
 
 	//サウンド
@@ -1404,6 +1471,16 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			sphereWorld = MakeAffineMatrix(transformSphere.scale, transformSphere.rotate, transformSphere.translate);
 			sphereWVP = Multiply(sphereWorld, Multiply(viewMatrix, projectionMatrix));
 
+			//板ポリ
+
+			for (uint32_t index = 0; index < kNumInstance; index++) {
+				Matrix4x4 worldMatrix = MakeAffineMatrix(transforms[index].scale, transforms[index].rotate, transforms[index].translate);
+				Matrix4x4 worldViewProjectionMatrix2 = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
+				instancingData[index].WVP = worldViewProjectionMatrix2;
+				instancingData[index].World = worldMatrix;
+
+			}
+
 			//directionalLightDataSphere->direction = Normalize(directionalLightDataSphere->direction);
 
 			wvpData->World = worldMatri;
@@ -1488,7 +1565,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 				commandList->RSSetViewports(1, &viewport);
 				commandList->RSSetScissorRects(1, &scissorRect);
 
-				commandList->SetGraphicsRootSignature(rootSignature);
+				commandList->SetGraphicsRootSignature(rootSignatureOb3);
 				commandList->SetPipelineState(graphicsPipelineState);
 				commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
 			
@@ -1506,8 +1583,8 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 				//commandList->DrawInstanced(6, 1, 0, 0);
 
-				commandList->DrawInstanced(UINT(modelData.vertices.size()), 10, 0, 0);
-	
+				//commandList->DrawInstanced(UINT(modelData.vertices.size()), 10, 0, 0);
+
 				//球
 
 				if (useSphere){
@@ -1517,6 +1594,9 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 					commandList->DrawInstanced(kSubdivision * kSubdivision * 6, 1, 0, 0);
 				}
+
+
+	
 
 
 
@@ -1529,6 +1609,27 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 				////commandList->DrawInstanced(6, 1, 0, 0);
 				commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
+
+				//板ポリ
+				commandList->SetGraphicsRootSignature(rootSignaturePar);
+				commandList->SetPipelineState(graphicsPipelineStatePar);
+				commandList->IASetVertexBuffers(0,1,&vertexBufferView);
+				commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+				// root[0] Material
+				commandList->SetGraphicsRootConstantBufferView(0,materialResource->GetGPUVirtualAddress());
+
+				// root[1] Instancing
+				commandList->SetGraphicsRootDescriptorTable(1,instancingSrvHandleGPU);
+
+				// root[2] Texture
+				commandList->SetGraphicsRootDescriptorTable(2,textureSrvHandleGPU2);
+
+				// root[3] Light
+				commandList->SetGraphicsRootConstantBufferView(3,directionalLightResourceSphere->GetGPUVirtualAddress());
+				commandList->SetGraphicsRootDescriptorTable(1, instancingSrvHandleGPU);
+
+				commandList->DrawInstanced(UINT(modelData.vertices.size()), kNumInstance, 0, 0);
 
 			#ifdef USE_IMGUI
 			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList.Get());
