@@ -1397,7 +1397,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 			//ImGui内部コマンド生成
 			ImGui::Render();
-
+			
 
 
 			#endif // DEBUG
