@@ -24,13 +24,17 @@ public:
 	static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
 
 
+	static const int32_t kClientWidth = 1280;
+	static const int32_t kClientHeight = 720;
+
+	HWND GetHwnd()const { return hwnd; };
+	HINSTANCE GetHInstance()const { return wc.hInstance; };
+
 private:
 	HRESULT hr;
 	WNDCLASS wc{};
 	RECT wrc;
-	HWND hwnd;
+	HWND hwnd = nullptr;
 
-	const int32_t kClientWidth = 1280;
-	const int32_t kClientHeight = 720;
 };
 
