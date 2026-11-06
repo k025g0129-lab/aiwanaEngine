@@ -827,7 +827,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	blendDesc.RenderTarget[0].BlendEnable = TRUE;
 	blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;	
 	blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;	
-	blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
+	blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
 	blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
 	blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
 	blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
@@ -924,8 +924,8 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 
 	//OBJ読み込み
-	ModelData modelData = LoadObjFile("resources/fence", "fence.obj");
-	//ModelData modelData2 = LoadObjFile("resources", "plane.obj");
+	//ModelData modelData = LoadObjFile("resources/fence", "fence.obj");
+	ModelData modelData = LoadObjFile("resources", "plane.obj");
 
 	//マテリアル用に変更
 	Microsoft::WRL::ComPtr < ID3D12Resource> vertexResource = CreateBufferResource(device, sizeof(VertexData) * modelData.vertices.size());
@@ -1308,7 +1308,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	for (uint32_t index = 0; index < kNumInstance; index++) {
 		transforms[index].scale = { 1.0f,1.0f,1.0f };
-		transforms[index].rotate = { 0.0f,0.0f,0.0f };
+		transforms[index].rotate = { 0.0f,3.14f,0.0f };
 		transforms[index].translate = { index * 0.1f,index * 0.1f,index * 0.1f };
 
 	}
@@ -1365,6 +1365,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	LightingType lightingType = HalfLambert;
 
 	//bool useMonsterBall = true;
+
 
 	#endif // USE_IMGUI
 
@@ -1476,7 +1477,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			for (uint32_t index = 0; index < kNumInstance; index++) {
 				Matrix4x4 worldMatrix = MakeAffineMatrix(transforms[index].scale, transforms[index].rotate, transforms[index].translate);
 				Matrix4x4 worldViewProjectionMatrix2 = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
-				instancingData[index].WVP = worldViewProjectionMatrix2;
+				instancingData[index].WVP = worldViewProjectionMatrix2;	
 				instancingData[index].World = worldMatrix;
 
 			}
@@ -1578,7 +1579,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 				////commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? textureSrvHandleGPU2 : textureSrvHandleGPU);
 
-				commandList->SetGraphicsRootDescriptorTable(2,textureSrvHandleGPU2);
+				commandList->SetGraphicsRootDescriptorTable(2,textureSrvHandleGPU);
 				commandList->SetGraphicsRootConstantBufferView(3, directionalLightResourceSphere->GetGPUVirtualAddress());
 
 				//commandList->DrawInstanced(6, 1, 0, 0);
