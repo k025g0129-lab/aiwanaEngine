@@ -20,7 +20,7 @@
 #include "Input.h"
 #include "DebugCamera.h"
 #include<vector>
-
+#include "WinApp.h"
 
 
 #ifdef USE_IMGUI
@@ -468,43 +468,15 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	Microsoft::WRL::ComPtr < IDXGIFactory7> dxgiFactory;
 	Microsoft::WRL::ComPtr < ID3D12Device> device;
 
-
-	CoInitializeEx(0, COINIT_MULTITHREADED);
-
 	SetUnhandledExceptionFilter(ExportDump);
 
 
-	//ウィンドウ設定
-	WNDCLASS wc{};
-	wc.lpfnWndProc = WindowProc;
-	wc.lpszClassName = L"CG2WindowClass";
-	wc.hInstance = GetModuleHandle(nullptr);
-	wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
+	//WinApp跡地
+	WinApp* winApp = nullptr;
 
-	RegisterClass(&wc);
+	winApp = new WinApp();
+	winApp->Initialize();
 
-	const int32_t kClientWidth = 1280;
-	const int32_t kClientHeight = 720;
-
-	RECT wrc = { 0,0,kClientWidth ,kClientHeight };
-	AdjustWindowRect(&wrc, WS_OVERLAPPEDWINDOW, false);
-
-	HWND hwnd = CreateWindow(
-		wc.lpszClassName,
-		L"CG2",
-		WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		wrc.right - wrc.left,
-		wrc.bottom - wrc.top,
-		nullptr,
-		nullptr,
-		wc.hInstance,
-		nullptr
-
-	);
-
-	ShowWindow(hwnd, SW_SHOW);
 
 	//デバック
 	DebugLog::Initialize();
@@ -1519,6 +1491,8 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	#ifdef _DEBUG
 	delete debugCamera;
 	#endif 
+
+	delete winApp;
 
 	CloseHandle(fenceEvent);
 	xAudio2.Reset();

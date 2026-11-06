@@ -5,12 +5,7 @@ void WinApp::Initialize(){
 
 	wrc = { 0,0,kClientWidth ,kClientHeight };
 
-}
-
-void WinApp::Update(){
-
-
-	wc.lpfnWndProc = WindowProc;
+	wc.lpfnWndProc = WinApp::WindowProc;
 	wc.lpszClassName = L"CG2WindowClass";
 	wc.hInstance = GetModuleHandle(nullptr);
 	wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
@@ -37,11 +32,16 @@ void WinApp::Update(){
 	ShowWindow(hwnd, SW_SHOW);
 
 
+}
+
+void WinApp::Update(){
+
+
 
 
 }
 
-LRESULT WinApp::WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam){
+LRESULT CALLBACK WinApp::WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam){
 
 	if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam)) {
 		return true;
