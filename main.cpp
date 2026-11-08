@@ -369,6 +369,7 @@ struct D3DResourceLeakChecker{
 	}
 };
 
+
 SoundData SoundLoadWave(const char* filename) {
 	//HRESULT hr;
 
