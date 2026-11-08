@@ -1,6 +1,7 @@
 #pragma once
 #include <dinput.h>
 #include <wrl.h>
+#include "WinApp.h"
 
 class Input {
 public:
@@ -8,8 +9,10 @@ public:
 
     static Input* GetInstance();
 
-    void Initialize(HINSTANCE hInstance, HWND hwnd);
+    void Initialize(WinApp* winApp);
     void Update();
+
+
 
     bool PushKey(BYTE keyNumber);
     bool TriggerKey(BYTE keyNumber);
@@ -30,4 +33,6 @@ private:
 
     BYTE key_[256]{};
     BYTE preKey_[256]{};
+
+    WinApp* winApp_ = nullptr;
 };

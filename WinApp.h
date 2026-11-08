@@ -1,5 +1,4 @@
 #pragma once
-#include "WinApp.h"
 #include <Windows.h>
 #include <objbase.h>
 #include<cstdint>
@@ -20,6 +19,8 @@ public:
 	void Initialize();
 
 	void Update();
+
+	void Finalize();
 
 	static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
 

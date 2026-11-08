@@ -1167,7 +1167,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	SoundPlayWave(xAudio2.Get(), soundData1);
 
 	//キーボード
-	Input::GetInstance()->Initialize(winApp->GetHInstance(), winApp->GetHwnd());
+	Input::GetInstance()->Initialize(winApp);
 	Input* input = Input::GetInstance();
 
 	//デバックカメラ
@@ -1493,6 +1493,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	delete debugCamera;
 	#endif 
 
+	winApp->Finalize();
 	delete winApp;
 
 	CloseHandle(fenceEvent);
@@ -1506,15 +1507,6 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	ImGui::DestroyContext();
 
 	#endif // USE_IMGUI
-
-
-
-
-	CloseWindow(winApp->GetHwnd());
-
-
-
-
 
 	DebugLog::Shutdown();
 
