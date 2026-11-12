@@ -311,6 +311,8 @@ void DirectXCommon::DXCCompilerCreate(){
 	assert(SUCCEEDED(hr));
 	hr = DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&dxcCompiler));
 	assert(SUCCEEDED(hr));
+	//PSO
+	//includeへの準備
 	hr = dxcUtils->CreateDefaultIncludeHandler(includeHandler_.GetAddressOf());
 	assert(SUCCEEDED(hr));
 
