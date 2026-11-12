@@ -22,6 +22,8 @@
 #include<vector>
 #include "WinApp.h"
 #include "DirectXCommon.h"
+#include "Sprite.h"
+#include "Object3d.h"
 
 
 #ifdef USE_IMGUI
@@ -423,81 +425,21 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	wvpData->WVP = MakeIdentity4x4();
 
 	//スプライト用頂点リソース
-	Microsoft::WRL::ComPtr < ID3D12Resource> vertexResourceSprite = dxCommon->CreateBufferResource( sizeof(VertexData) * 4);
-	Microsoft::WRL::ComPtr < ID3D12Resource> indexResourceSprite = dxCommon->CreateBufferResource( sizeof(uint32_t) * 6);
-	Microsoft::WRL::ComPtr < ID3D12Resource> materialResourceSprite = dxCommon->CreateBufferResource( sizeof(Material));
+
 	Microsoft::WRL::ComPtr < ID3D12Resource> directionalLightResourceSphere = dxCommon->CreateBufferResource( sizeof(DirectionalLight));
 
-	uint32_t* indexDataSprite = nullptr;
-	TransformSRT uvTransformSprite = {
-		{1.0f,1.0f,1.0f},
-		{0.0f,0.0f,0.0f},
-		{0.0f,0.0f,0.0f},
-	};
-
 	directionalLightResourceSphere->SetName(L"Sphere:directionalLightResource");
-	VertexData* vertexDataSprite = nullptr;
-	Material* materialDataSprite = nullptr;
+
 	DirectionalLight* directionalLightDataSphere = nullptr;
 
-	D3D12_VERTEX_BUFFER_VIEW vertexBufferViewSprite{};
-	D3D12_INDEX_BUFFER_VIEW indexBufferViewSprite{};
-
-	vertexBufferViewSprite.BufferLocation = vertexResourceSprite->GetGPUVirtualAddress();
-	vertexBufferViewSprite.SizeInBytes = sizeof(VertexData) * 4;
-	vertexBufferViewSprite.StrideInBytes = sizeof(VertexData);
-
-	indexBufferViewSprite.BufferLocation = indexResourceSprite->GetGPUVirtualAddress();
-	indexBufferViewSprite.SizeInBytes = sizeof(uint32_t) * 6;
-	indexBufferViewSprite.Format = DXGI_FORMAT_R32_UINT;
-
-	vertexResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&vertexDataSprite));
-	materialResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&materialDataSprite));
 	directionalLightResourceSphere->Map(0, nullptr, reinterpret_cast<void**>(&directionalLightDataSphere));
-	indexResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&indexDataSprite));
-
-	indexDataSprite[0] = 0;
-	indexDataSprite[1] = 1;
-	indexDataSprite[2] = 2;
-	indexDataSprite[3] = 1;
-	indexDataSprite[4] = 3;
-	indexDataSprite[5] = 2;
-
-
-	//左下、左上、右下、右上
-	vertexDataSprite[0].pos = { 0.0f,360.0f,0.0f,1.0f };
-	vertexDataSprite[0].texcoord = { 0.0f,1.0f };
-	vertexDataSprite[0].normal = { 0.0f,0.0f,-1.0f };
-	vertexDataSprite[1].pos = { 0.0f,0.0f,0.0f,1.0f };
-	vertexDataSprite[1].texcoord = { 0.0f,0.0f };
-	vertexDataSprite[2].pos = { 640.0f,360.0f,0.0f,1.0f };
-	vertexDataSprite[2].texcoord = { 1.0f,1.0f };
-	vertexDataSprite[3].pos = { 640.0f,0.0f,0.0f,1.0f };
-	vertexDataSprite[3].texcoord = { 1.0f,0.0f };
-
-
-	Microsoft::WRL::ComPtr < ID3D12Resource> transformationMatrixResourceSprite = dxCommon->CreateBufferResource(sizeof(TransformationMaterial));
-	Matrix4x4* transformationMatrixDataSprite = nullptr;
-	Matrix4x4 uvTransformMatrix = MakeScaleMatrix(uvTransformSprite.scale);
-
-	transformationMatrixResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&transformationMatrixDataSprite));
-	*transformationMatrixDataSprite = MakeIdentity4x4();
-
-	materialDataSprite->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-	materialDataSprite->uvTransform = MakeIdentity4x4();
-	materialDataSprite->lightngType = 0;
 
 	directionalLightDataSphere->color = { 1.0f,1.0f,1.0f,1.0f };
 	directionalLightDataSphere->direction = { 0.0f,-1.0f,0.0f };
 	directionalLightDataSphere->intensity = 1.0f;
 
-	uvTransformMatrix = Multiply(uvTransformMatrix, MakeRotateZMatrix(uvTransformSprite.rotate.z));
-	uvTransformMatrix = Multiply(uvTransformMatrix, MakeTranslateMatrix(uvTransformSprite.translate));
-	materialDataSprite->uvTransform = uvTransformMatrix;
-
 	//Transform変数作成(3D,2D)
 	TransformSRT transformSRT = { {1.0f,1.0f,1.0f},{0.0f,3.0f,0.0f},{0.0f,0.0f,0.0f} };
-	TransformSRT transformSprite{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 
 
 	//3次元的用変数	
@@ -509,13 +451,6 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatri, Multiply(viewMatrix, projectionMatrix));
 	wvpData->WVP = worldViewProjectionMatrix;
 	wvpData->World = worldMatri;
-
-	//2次元的用変数	
-	Matrix4x4 worldMatriSprite = MakeAffineMatrix(transformSprite.scale, transformSprite.rotate, transformSprite.translate);
-	Matrix4x4 viewMatrixSprite = MakeIdentity4x4();
-	Matrix4x4 projectionMatrixSprite = MakeOrthographicMatrix(0.0f, 0.0f, float(WinApp::kClientWidth), float(WinApp::kClientHeight), 0.0f, 100.0f);
-	Matrix4x4 worldViewProjectionMatrixSprite = Multiply(worldMatriSprite, Multiply(viewMatrixSprite, projectionMatrixSprite));
-	*transformationMatrixDataSprite = worldViewProjectionMatrixSprite;
 
 	//何のテクスチャを貼るか
 	DirectX::ScratchImage mipImages = dxCommon->LoadTexture("resources/uvChecker.png");
@@ -567,7 +502,18 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	dxCommon->GetDevice()->CreateShaderResourceView(textureResource2.Get(), &srvDesc2, textureSrvHandleCPU2);
 
 
-	
+	Sprite sprite;
+	sprite.Initialize(dxCommon, textureSrvHandleGPU2);
+
+	Object3d object3d;
+	object3d.Initialize(dxCommon,modelData,textureSrvHandleGPU2);
+	object3d.GetTransform().rotate.y = 3.0f;
+
+	// サイズ変更
+	sprite.SetSize(320.0f, 180.0f);
+
+	// 透明度
+	sprite.SetAlpha(0.7f);
 	//球(コメントする可能性あり)
 
 
@@ -735,24 +681,35 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		ImGui::NewFrame();
 		//ImGui::Checkbox("useMonsterBall", &useMonsterBall);
 		//ImGui::Checkbox("debugCamera", &isDebugOn);
+		if (ImGui::TreeNode("Camera")) {
 
+			ImGui::DragFloat3(
+				"CameraTranslate",
+				&cameraTransformSRT.translate.x,
+				0.1f
+			);
+
+			ImGui::DragFloat3(
+				"CameraRotate",
+				&cameraTransformSRT.rotate.x,
+				0.01f
+			);
+
+			ImGui::TreePop();
+		}
 
 		if (ImGui::TreeNode("2D")) {
-			ImGui::DragFloat3("SpriteTransform", &transformSprite.translate.x, 0.1f);
-			ImGui::DragFloat3("SpriteRotate", &transformSprite.rotate.x, 0.01f, -10.0f, 10.0f);
-			ImGui::DragFloat3("SpriteScale", &transformSprite.scale.x, 0.01f, -10.0f, 10.0f);
+			ImGui::DragFloat3("SpriteTransform", &sprite.GetTransform().translate.x, 0.1f);
+			ImGui::DragFloat3("SpriteRotate", &sprite.GetTransform().rotate.x, 0.01f, -10.0f, 10.0f);
+			ImGui::DragFloat3("SpriteScale", &sprite.GetTransform().scale.x, 0.01f, -10.0f, 10.0f);
 
-			ImGui::DragFloat2("UVTransform", &uvTransformSprite.translate.x, 0.01f, -10.0f, 10.0f);
-			ImGui::DragFloat2("UVScale", &uvTransformSprite.scale.x, 0.01f, -10.0f, 10.0f);
-			ImGui::SliderAngle("UVRotate", &uvTransformSprite.rotate.z);
 			ImGui::TreePop();
 		}
 
 		if (ImGui::TreeNode("OBJ")) {
-			ImGui::DragFloat3("OBJTranslate", &transformSRT.translate.x, 0.01f, -10.0f, 10.0f);
-			ImGui::DragFloat3("OBJRotate", &transformSRT.rotate.x, 0.01f, -10.0f, 10.0f);
-			ImGui::DragFloat3("OBJScale", &transformSRT.scale.x, 0.01f, -10.0f, 10.0f);
-			ImGui::ColorEdit4("MaterialColor", &materialData->color.x);
+			ImGui::DragFloat3("OBJTranslate", &object3d.GetTransform().translate.x, 0.01f, -10.0f, 10.0f);
+			ImGui::DragFloat3("OBJRotate", &object3d.GetTransform().rotate.x, 0.01f, -10.0f, 10.0f);
+			ImGui::DragFloat3("OBJScale", &object3d.GetTransform().scale.x, 0.01f, -10.0f, 10.0f);
 
 			ImGui::TreePop();
 		}
@@ -803,17 +760,21 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 #endif // USE_IMGUI
 
 		//transformSRT.rotate.y += 0.01f;
+
+		//カメラ
+		cameraMatrix = MakeAffineMatrix(
+			cameraTransformSRT.scale,
+			cameraTransformSRT.rotate,
+			cameraTransformSRT.translate
+		);
+
+		viewMatrix = Inverse(cameraMatrix);
+	
+		object3d.Update(viewMatrix, projectionMatrix);
+	 
 		//3D
 		worldMatri = MakeAffineMatrix(transformSRT.scale, transformSRT.rotate, transformSRT.translate);
 		worldViewProjectionMatrix = Multiply(worldMatri, Multiply(viewMatrix, projectionMatrix));
-
-		//2D
-		worldMatriSprite = MakeAffineMatrix(transformSprite.scale, transformSprite.rotate, transformSprite.translate);
-		worldViewProjectionMatrixSprite = Multiply(worldMatriSprite, Multiply(viewMatrixSprite, projectionMatrixSprite));
-
-		uvTransformMatrix = MakeScaleMatrix(uvTransformSprite.scale);
-		uvTransformMatrix = Multiply(uvTransformMatrix, MakeRotateZMatrix(uvTransformSprite.rotate.z));
-		uvTransformMatrix = Multiply(uvTransformMatrix, MakeTranslateMatrix(uvTransformSprite.translate));
 
 		//球
 		sphereWvpResource->Map(0, nullptr, reinterpret_cast<void**>(&sphereWvpData));
@@ -825,13 +786,12 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		wvpData->World = worldMatri;
 		wvpData->WVP = worldViewProjectionMatrix;
 
-
-		*transformationMatrixDataSprite = worldViewProjectionMatrixSprite;
-
-		materialDataSprite->uvTransform = uvTransformMatrix;
-
 		sphereWvpData->World = sphereWorld;
 		sphereWvpData->WVP = sphereWVP;
+
+
+		sprite.GetTransform().rotate.z += 0.02f;
+		sprite.Update();
 
 
 #ifdef _DEBUG //デバックカメラ
@@ -876,24 +836,16 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		//描画	
 
+		ID3D12GraphicsCommandList* commandList = dxCommon->GetCommandList();
 
-		//commandList->SetGraphicsRootSignature(rootSignature);
-		//commandList->SetPipelineState(graphicsPipelineState);
-		//commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
-
-
-		//commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		//commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
-
-		//commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());
+		commandList->SetGraphicsRootSignature(rootSignature);
+		commandList->SetPipelineState(graphicsPipelineState);
+		
+		commandList->SetGraphicsRootConstantBufferView(3, directionalLightResourceSphere->GetGPUVirtualAddress());
 
 
-		//////commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? textureSrvHandleGPU2 : textureSrvHandleGPU);
-
-		//commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU2);
-		//commandList->SetGraphicsRootConstantBufferView(3, directionalLightResourceSphere->GetGPUVirtualAddress());
-
-		////commandList->DrawInstanced(6, 1, 0, 0);
+		object3d.Draw();
+		sprite.Draw();
 
 		//commandList->DrawInstanced(UINT(modelData.vertices.size()), 1, 0, 0);
 
@@ -906,17 +858,6 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		//	commandList->DrawInstanced(kSubdivision * kSubdivision * 6, 1, 0, 0);
 		//}
-
-
-
-		//////2D
-		//commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
-		//////commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
-		//commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
-		//commandList->IASetIndexBuffer(&indexBufferViewSprite);
-		//commandList->SetGraphicsRootConstantBufferView(1, transformationMatrixResourceSprite->GetGPUVirtualAddress());
-		//////commandList->DrawInstanced(6, 1, 0, 0);
-		//commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
 
 #ifdef USE_IMGUI
