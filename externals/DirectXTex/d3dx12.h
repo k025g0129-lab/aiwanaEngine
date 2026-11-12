@@ -4870,7 +4870,7 @@ public: // Function declaration
     // Default constructor that creates an empty object
     CD3DX12FeatureSupport() noexcept;
 
-    // Initialize data from the given device
+    // Initialize data from the given device_
     HRESULT Init(ID3D12Device* pDevice);
 
     // Retreives the status of the object. If an error occurred in the initialization process, the function returns the error code.
@@ -5068,7 +5068,7 @@ private: // Private structs and helpers declaration
     HRESULT QueryProtectedResourceSessionTypes(UINT NodeIndex, UINT Count);
 
 private: // Member data
-    // Pointer to the underlying device
+    // Pointer to the underlying device_
     ID3D12Device* m_pDevice;
 
     // Stores the error code from initialization
@@ -5137,7 +5137,7 @@ inline RETTYPE CD3DX12FeatureSupport::NAME() const noexcept \
 }
 
 // Macro to set up a getter function for feature data indexed by the graphics node ID
-// The default parameter is 0, or the first availabe graphics device node
+// The default parameter is 0, or the first availabe graphics device_ node
 #define FEATURE_SUPPORT_GET_NODE_INDEXED(RETTYPE,FEATURE,OPTION) \
 inline RETTYPE CD3DX12FeatureSupport::OPTION(UINT NodeIndex) const \
 {\

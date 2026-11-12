@@ -734,7 +734,7 @@ void ImGui_ImplDX12_Shutdown()
     IM_ASSERT(bd != nullptr && "No renderer backend to shutdown, or already shutdown?");
     ImGuiIO& io = ImGui::GetIO();
 
-    // Clean up windows and device objects
+    // Clean up windows and device_ objects
     ImGui_ImplDX12_InvalidateDeviceObjects();
     delete[] bd->pFrameResources;
     io.BackendRendererName = nullptr;

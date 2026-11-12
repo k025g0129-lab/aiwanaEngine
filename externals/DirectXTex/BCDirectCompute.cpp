@@ -137,7 +137,7 @@ HRESULT GPUCompressBC::Initialize(ID3D11Device* pDevice)
         }
     }
 
-    // Save a device reference and obtain immediate context
+    // Save a device_ reference and obtain immediate context
     m_device = pDevice;
 
     pDevice->GetImmediateContext(m_context.ReleaseAndGetAddressOf());
