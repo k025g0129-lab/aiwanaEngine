@@ -24,6 +24,7 @@
 #include "DirectXCommon.h"
 #include "Sprite.h"
 #include "Object3d.h"
+#include "ParticleSystem.h"
 
 
 #ifdef USE_IMGUI
@@ -277,8 +278,6 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	descriptionRootSignature.pStaticSamplers = staticSamplers;
 	descriptionRootSignature.NumStaticSamplers = _countof(staticSamplers);
 
-
-
 	ID3DBlob* signatureBlob = nullptr;
 	ID3DBlob* errorBlob = nullptr;
 	HRESULT hr = D3D12SerializeRootSignature(&descriptionRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);
@@ -320,7 +319,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	blendDesc.RenderTarget[0].BlendEnable = TRUE;
 	blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;	
 	blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;	
-	blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
+	blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
 	blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
 	blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
 	blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
@@ -363,9 +362,119 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	assert(SUCCEEDED(hr));
 
 
+	//particle
+	D3D12_ROOT_PARAMETER rootParametersPar[4] = {};
+	D3D12_ROOT_SIGNATURE_DESC descriptionRootSignaturePar{};
+	descriptionRootSignaturePar.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+
+	D3D12_DESCRIPTOR_RANGE descriptorRangeForInstancing[1] = {};
+	descriptorRangeForInstancing[0].BaseShaderRegister = 0;
+	descriptorRangeForInstancing[0].NumDescriptors = 1;
+	descriptorRangeForInstancing[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	descriptorRangeForInstancing[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	rootParametersPar[0] = rootParameters[0];
+	rootParametersPar[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParametersPar[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+	rootParametersPar[1].DescriptorTable.pDescriptorRanges = descriptorRangeForInstancing;
+	rootParametersPar[1].DescriptorTable.NumDescriptorRanges = _countof(descriptorRangeForInstancing);
+	rootParametersPar[2] = rootParameters[2];
+	rootParametersPar[3] = rootParameters[3];
+
+
+	descriptionRootSignaturePar.pParameters = rootParametersPar;
+	descriptionRootSignaturePar.NumParameters = _countof(rootParametersPar);
+
+	descriptionRootSignaturePar.pStaticSamplers = staticSamplers;
+	descriptionRootSignaturePar.NumStaticSamplers = _countof(staticSamplers);
+
+	ID3DBlob* signatureBlobOb3 = nullptr;
+	ID3DBlob* errorBlobOb3 = nullptr;
+	hr = D3D12SerializeRootSignature(&descriptionRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlobOb3, &errorBlobOb3);
+
+	if (FAILED(hr)) {
+		LOG("{}", reinterpret_cast<char*>(errorBlobOb3->GetBufferPointer()));
+		assert(false);
+
+	}
+
+	ID3D12RootSignature* rootSignatureOb3 = nullptr;
+	hr = dxCommon->GetDevice()->CreateRootSignature(0, signatureBlobOb3->GetBufferPointer(), signatureBlobOb3->GetBufferSize(), IID_PPV_ARGS(&rootSignatureOb3));
+	assert(SUCCEEDED(hr));
+
+
+	ID3DBlob* signatureBlobPar = nullptr;
+	ID3DBlob* errorBlobPar = nullptr;
+	hr = D3D12SerializeRootSignature(&descriptionRootSignaturePar, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlobPar, &errorBlobPar);
+
+	if (FAILED(hr)) {
+		LOG("{}", reinterpret_cast<char*>(errorBlobPar->GetBufferPointer()));
+		assert(false);
+
+	}
+
+	ID3D12RootSignature* rootSignaturePar = nullptr;
+	hr = dxCommon->GetDevice()->CreateRootSignature(0, signatureBlobPar->GetBufferPointer(), signatureBlobPar->GetBufferSize(), IID_PPV_ARGS(&rootSignaturePar));
+	assert(SUCCEEDED(hr));
+
+
+
+	// Particle Shaderコンパイル
+	Microsoft::WRL::ComPtr<IDxcBlob> particleVertexShaderBlob =
+		dxCommon->CompileShader(
+			L"Particle.VS.hlsl",
+			L"vs_6_0"
+		);
+
+	assert(particleVertexShaderBlob != nullptr);
+
+	Microsoft::WRL::ComPtr<IDxcBlob> particlePixelShaderBlob =
+		dxCommon->CompileShader(
+			L"Particle.PS.hlsl",
+			L"ps_6_0"
+		);
+
+	assert(particleVertexShaderBlob != nullptr);
+	assert(particlePixelShaderBlob != nullptr);
+
+
+	// Object3D用PSOをコピーしてParticle用に変更
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPipelineStateDescPar = graphicsPipelineStateDesc;
+
+	graphicsPipelineStateDescPar.pRootSignature = rootSignaturePar;
+
+	graphicsPipelineStateDescPar.VS = {
+		particleVertexShaderBlob->GetBufferPointer(),
+		particleVertexShaderBlob->GetBufferSize()
+	};
+
+	graphicsPipelineStateDescPar.PS = {
+		particlePixelShaderBlob->GetBufferPointer(),
+		particlePixelShaderBlob->GetBufferSize()
+	};
+
+	// 板ポリを両面描画
+	graphicsPipelineStateDescPar.RasterizerState.CullMode =
+		D3D12_CULL_MODE_NONE;
+
+	// 深度バッファには書き込まない
+	graphicsPipelineStateDescPar.DepthStencilState.DepthWriteMask =
+		D3D12_DEPTH_WRITE_MASK_ZERO;
+
+
+	ID3D12PipelineState* graphicsPipelineStatePar =
+		nullptr;
+
+	hr = dxCommon->GetDevice()->CreateGraphicsPipelineState(
+		&graphicsPipelineStateDescPar,
+		IID_PPV_ARGS(&graphicsPipelineStatePar)
+	);
+
+	assert(SUCCEEDED(hr));
+
 	//OBJ読み込み
 	ModelData modelData = LoadObjFile("resources/fence", "fence.obj");
-	//ModelData modelData2 = LoadObjFile("resources", "plane.obj");
+	ModelData modelData2 = LoadObjFile("resources", "plane.obj");
 
 	//マテリアル用に変更
 	Microsoft::WRL::ComPtr < ID3D12Resource> vertexResource = dxCommon->CreateBufferResource(sizeof(VertexData) * modelData.vertices.size());
@@ -508,6 +617,9 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	Object3d object3d;
 	object3d.Initialize(dxCommon,modelData,textureSrvHandleGPU2);
 	object3d.GetTransform().rotate.y = 3.0f;
+
+	ParticleSystem particle;
+	particle.Initialize(dxCommon, modelData2, textureSrvHandleGPU,10);
 
 	// サイズ変更
 	sprite.SetSize(320.0f, 180.0f);
@@ -713,6 +825,13 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 			ImGui::TreePop();
 		}
+		if (ImGui::TreeNode("Par")) {
+			ImGui::DragFloat3("OBJTranslate", &particle.GetTransform().translate.x, 0.01f, -10.0f, 10.0f);
+			ImGui::DragFloat3("OBJRotate", &particle.GetTransform().rotate.x, 0.01f, -10.0f, 10.0f);
+			ImGui::DragFloat3("OBJScale", &particle.GetTransform().scale.x, 0.01f, -10.0f, 10.0f);
+
+			ImGui::TreePop();
+		}
 
 		if (ImGui::TreeNode("Sphere")) {
 			if (!useSphere) {
@@ -771,6 +890,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		viewMatrix = Inverse(cameraMatrix);
 	
 		object3d.Update(viewMatrix, projectionMatrix);
+		particle.Update(viewMatrix, projectionMatrix);
 	 
 		//3D
 		worldMatri = MakeAffineMatrix(transformSRT.scale, transformSRT.rotate, transformSRT.translate);
@@ -792,6 +912,8 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		sprite.GetTransform().rotate.z += 0.02f;
 		sprite.Update();
+
+
 
 
 #ifdef _DEBUG //デバックカメラ
@@ -838,14 +960,23 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 		ID3D12GraphicsCommandList* commandList = dxCommon->GetCommandList();
 
+		//Object3D用
 		commandList->SetGraphicsRootSignature(rootSignature);
 		commandList->SetPipelineState(graphicsPipelineState);
 		
 		commandList->SetGraphicsRootConstantBufferView(3, directionalLightResourceSphere->GetGPUVirtualAddress());
 
 
-		object3d.Draw();
-		sprite.Draw();
+		//object3d.Draw();
+		//sprite.Draw();
+
+
+		//Particle用
+		commandList->SetGraphicsRootSignature(rootSignaturePar);
+		commandList->SetPipelineState(graphicsPipelineStatePar);
+
+		commandList->SetGraphicsRootConstantBufferView(3,directionalLightResourceSphere->GetGPUVirtualAddress());
+		particle.Draw();
 
 		//commandList->DrawInstanced(UINT(modelData.vertices.size()), 1, 0, 0);
 

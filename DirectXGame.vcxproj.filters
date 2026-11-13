@@ -21,6 +21,9 @@
     <None Include=".editorconfig" />
     <None Include="externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj" />
     <None Include="Object3d.hlsli" />
+    <None Include="Particle.hlsli">
+      <Filter>ヘッダー ファイル</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -72,6 +75,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Object3d.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="ParticleSystem.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
@@ -130,10 +136,19 @@
     <ClInclude Include="Object3d.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="ParticleSystem.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Object3d.PS.hlsl" />
     <FxCompile Include="Object3d.VS.hlsl" />
+    <FxCompile Include="Particle.VS.hlsl">
+      <Filter>ヘッダー ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="Particle.PS.hlsl">
+      <Filter>ヘッダー ファイル</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt">

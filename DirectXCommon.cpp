@@ -232,7 +232,7 @@ void DirectXCommon::DescriptorHeapsCreate(){
 	rtvDescriptorHeap_ = CreateDescriptorHeap( D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2, false);
 
 	//ImGui用生成
-	srvDescriptorHeap_ = CreateDescriptorHeap( D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 3, true);
+	srvDescriptorHeap_ = CreateDescriptorHeap( D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, true);
 
 	//DSV用
 	dsvDescriptorHeap_ = CreateDescriptorHeap( D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1, false);
