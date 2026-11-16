@@ -9,6 +9,7 @@
 #include "DebugLogMacro.h"
 #include <array>
 #include <string>
+#include <chrono>
 #include "externals/DirectXTex/DirectXTex.h"
 #include "externals/DirectXTex/d3dx12.h"
 
@@ -122,6 +123,14 @@ private:
 	IDxcUtils* dxcUtils;
 	IDxcCompiler3* dxcCompiler;
 	Microsoft::WRL::ComPtr < IDxcIncludeHandler> includeHandler_;
+
+
+//メンバ関数
+private:
+	void InitializeFixFPS();
+	void UpdateFixFPS();
+
+	std::chrono::steady_clock::time_point reference_;
 
 };
 

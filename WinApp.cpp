@@ -31,6 +31,7 @@ void WinApp::Initialize(){
 
 	ShowWindow(hwnd, SW_SHOW);
 
+	timeBeginPeriod(1);
 
 }
 

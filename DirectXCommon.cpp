@@ -1,6 +1,7 @@
 #include "DirectXCommon.h"
 
 #include <cassert>
+#include <thread>
 #pragma comment(lib,"d3d12.lib")
 #pragma comment(lib,"dxgi.lib")
 
@@ -12,6 +13,9 @@ void DirectXCommon::Initialize(WinApp* winApp){
 	assert(winApp);
 
 	winApp_ = winApp;
+
+	//60FPSにする用
+	InitializeFixFPS();
 	
 	CreateDevice();
 	CommandInitialize();
@@ -99,6 +103,9 @@ void DirectXCommon::EndDraw(){
 		WaitForSingleObject(fenceEvent, INFINITE);
 
 	}
+
+	//FPS固定
+	UpdateFixFPS();
 
 	//次のフレーム用のコマンドリストを準備
 	hr = commandAllocator_->Reset();
@@ -634,4 +641,30 @@ DirectX::ScratchImage DirectXCommon::LoadTexture(const std::string& filePath){
 	assert(SUCCEEDED(hr));
 
 	return mipImages;
+}
+
+void DirectXCommon::InitializeFixFPS(){
+
+	reference_ = std::chrono::steady_clock::now();
+
+}
+
+void DirectXCommon::UpdateFixFPS(){
+
+	const  std::chrono::microseconds kMinTime(uint64_t (1000000.0f / 60.0f));
+	const  std::chrono::microseconds kMinCheckTime(uint64_t(1000000.0f / 65.0f));
+
+	std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+
+	std::chrono::microseconds elapsed = std::chrono::duration_cast<std::chrono::microseconds> (now - reference_);
+
+	if (elapsed <kMinCheckTime){
+		while (std::chrono::steady_clock::now() - reference_ < kMinTime) {
+			std::this_thread::sleep_for(std::chrono::microseconds(1));
+		}
+
+	}
+
+	reference_ = std::chrono::steady_clock::now();
+
 }

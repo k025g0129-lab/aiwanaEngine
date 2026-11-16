@@ -457,9 +457,9 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	graphicsPipelineStateDescPar.RasterizerState.CullMode =
 		D3D12_CULL_MODE_NONE;
 
-	// 深度バッファには書き込まない
+	// 深度バッファには書き込む
 	graphicsPipelineStateDescPar.DepthStencilState.DepthWriteMask =
-		D3D12_DEPTH_WRITE_MASK_ZERO;
+		D3D12_DEPTH_WRITE_MASK_ALL;
 
 
 	ID3D12PipelineState* graphicsPipelineStatePar =
