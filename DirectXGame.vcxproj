@@ -54,6 +54,7 @@
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)DirectXGame\aiwanaEngine\2D;$(ProjectDir)DirectXGame\aiwanaEngine\3D;$(ProjectDir)DirectXGame\aiwanaEngine\Base;$(ProjectDir)DirectXGame\aiwanaEngine\Effect;$(ProjectDir)DirectXGame\aiwanaEngine\Debug;$(ProjectDir)DirectXGame\aiwanaEngine\Scene;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -80,6 +81,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)DirectXGame\aiwanaEngine\2D;$(ProjectDir)DirectXGame\aiwanaEngine\3D;$(ProjectDir)DirectXGame\aiwanaEngine\Base;$(ProjectDir)DirectXGame\aiwanaEngine\Effect;$(ProjectDir)DirectXGame\aiwanaEngine\Debug;$(ProjectDir)DirectXGame\aiwanaEngine\Scene;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -101,9 +103,9 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="Particle.hlsli" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="DebugCamera.cpp" />
-    <ClCompile Include="DebugLog.cpp" />
-    <ClCompile Include="DirectXCommon.cpp" />
+    <ClCompile Include="DirectXGame\aiwanaEngine\Debug\DebugCamera.cpp" />
+    <ClCompile Include="DirectXGame\aiwanaEngine\Debug\DebugLog.cpp" />
+    <ClCompile Include="DirectXGame\aiwanaEngine\Base\DirectXCommon.cpp" />
     <ClCompile Include="externals\imgui\imgui.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
@@ -125,20 +127,20 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="externals\imgui\imgui_widgets.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="function.cpp" />
+    <ClCompile Include="DirectXGame\aiwanaEngine\Math\function.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Object3d.cpp" />
-    <ClCompile Include="ParticleSystem.cpp" />
+    <ClCompile Include="DirectXGame\aiwanaEngine\3D\Object3d.cpp" />
+    <ClCompile Include="DirectXGame\aiwanaEngine\Effect\ParticleSystem.cpp" />
     <ClCompile Include="ResourceObject.cpp" />
-    <ClCompile Include="Sprite.cpp" />
-    <ClCompile Include="WinApp.cpp" />
+    <ClCompile Include="DirectXGame\aiwanaEngine\2D\Sprite.cpp" />
+    <ClCompile Include="DirectXGame\aiwanaEngine\Base\WinApp.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="DebugCamera.h" />
-    <ClInclude Include="DebugLog.h" />
-    <ClInclude Include="DebugLogMacro.h" />
-    <ClInclude Include="DirectXCommon.h" />
+    <ClInclude Include="DirectXGame\aiwanaEngine\Debug\DebugCamera.h" />
+    <ClInclude Include="DirectXGame\aiwanaEngine\Debug\DebugLog.h" />
+    <ClInclude Include="DirectXGame\aiwanaEngine\Debug\DebugLogMacro.h" />
+    <ClInclude Include="DirectXGame\aiwanaEngine\Base\DirectXCommon.h" />
     <ClInclude Include="externals\imgui\imconfig.h" />
     <ClInclude Include="externals\imgui\imgui.h" />
     <ClInclude Include="externals\imgui\imgui_impl_dx12.h" />
@@ -147,13 +149,13 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="externals\imgui\imstb_rectpack.h" />
     <ClInclude Include="externals\imgui\imstb_textedit.h" />
     <ClInclude Include="externals\imgui\imstb_truetype.h" />
-    <ClInclude Include="function.h" />
+    <ClInclude Include="DirectXGame\aiwanaEngine\Math\function.h" />
     <ClInclude Include="Input.h" />
-    <ClInclude Include="Object3d.h" />
-    <ClInclude Include="ParticleSystem.h" />
+    <ClInclude Include="DirectXGame\aiwanaEngine\3D\Object3d.h" />
+    <ClInclude Include="DirectXGame\aiwanaEngine\Effect\ParticleSystem.h" />
     <ClInclude Include="ResourceObject.h" />
-    <ClInclude Include="Sprite.h" />
-    <ClInclude Include="WinApp.h" />
+    <ClInclude Include="DirectXGame\aiwanaEngine\2D\Sprite.h" />
+    <ClInclude Include="DirectXGame\aiwanaEngine\Base\WinApp.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Object3d.PS.hlsl">

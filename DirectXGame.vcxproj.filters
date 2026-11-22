@@ -29,10 +29,10 @@
     <ClCompile Include="main.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="DebugLog.cpp">
+    <ClCompile Include="DirectXGame\aiwanaEngine\Debug\DebugLog.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="function.cpp">
+    <ClCompile Include="DirectXGame\aiwanaEngine\Math\function.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="externals\imgui\imgui.cpp">
@@ -59,36 +59,36 @@
     <ClCompile Include="ResourceObject.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="DebugCamera.cpp">
+    <ClCompile Include="DirectXGame\aiwanaEngine\Debug\DebugCamera.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Input.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="WinApp.cpp">
+    <ClCompile Include="DirectXGame\aiwanaEngine\Base\WinApp.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="DirectXCommon.cpp">
+    <ClCompile Include="DirectXGame\aiwanaEngine\Base\DirectXCommon.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Sprite.cpp">
+    <ClCompile Include="DirectXGame\aiwanaEngine\2D\Sprite.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Object3d.cpp">
+    <ClCompile Include="DirectXGame\aiwanaEngine\3D\Object3d.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="ParticleSystem.cpp">
+    <ClCompile Include="DirectXGame\aiwanaEngine\Effect\ParticleSystem.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="DebugLog.h">
+    <ClInclude Include="DirectXGame\aiwanaEngine\Debug\DebugLog.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="DebugLogMacro.h">
+    <ClInclude Include="DirectXGame\aiwanaEngine\Debug\DebugLogMacro.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="function.h">
+    <ClInclude Include="DirectXGame\aiwanaEngine\Math\function.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="externals\imgui\imconfig.h">
@@ -118,25 +118,25 @@
     <ClInclude Include="ResourceObject.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="DebugCamera.h">
+    <ClInclude Include="DirectXGame\aiwanaEngine\Debug\DebugCamera.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Input.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="WinApp.h">
+    <ClInclude Include="DirectXGame\aiwanaEngine\Base\WinApp.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="DirectXCommon.h">
+    <ClInclude Include="DirectXGame\aiwanaEngine\Base\DirectXCommon.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Sprite.h">
+    <ClInclude Include="DirectXGame\aiwanaEngine\2D\Sprite.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Object3d.h">
+    <ClInclude Include="DirectXGame\aiwanaEngine\3D\Object3d.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="ParticleSystem.h">
+    <ClInclude Include="DirectXGame\aiwanaEngine\Effect\ParticleSystem.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
