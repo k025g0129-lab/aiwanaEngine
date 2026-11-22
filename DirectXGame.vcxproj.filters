@@ -20,8 +20,8 @@
   <ItemGroup>
     <None Include=".editorconfig" />
     <None Include="externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj" />
-    <None Include="Object3d.hlsli" />
-    <None Include="Particle.hlsli">
+    <None Include="resources\shaders\Object3d.hlsli" />
+    <None Include="resources\shaders\Particle.hlsli">
       <Filter>ヘッダー ファイル</Filter>
     </None>
   </ItemGroup>
@@ -141,12 +141,12 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Object3d.PS.hlsl" />
-    <FxCompile Include="Object3d.VS.hlsl" />
-    <FxCompile Include="Particle.VS.hlsl">
+    <FxCompile Include="resources\shaders\Object3d.PS.hlsl" />
+    <FxCompile Include="resources\shaders\Object3d.VS.hlsl" />
+    <FxCompile Include="resources\shaders\Particle.VS.hlsl">
       <Filter>ヘッダー ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="Particle.PS.hlsl">
+    <FxCompile Include="resources\shaders\Particle.PS.hlsl">
       <Filter>ヘッダー ファイル</Filter>
     </FxCompile>
   </ItemGroup>

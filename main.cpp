@@ -48,10 +48,15 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg
 //ウィンドウ作成
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 
+
+
+#ifdef USE_IMGUI
+
 	if (ImGui_ImplWin32_WndProcHandler(hwnd,msg,wparam,lparam)){
 		return true;
 	}
 
+#endif
 
 	switch (msg) {
 
@@ -328,12 +333,12 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	D3D12_RASTERIZER_DESC rasterizerDesc{};
 	rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
 	rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
-
+	
 	//Shaderコンパイル
-	Microsoft::WRL::ComPtr<IDxcBlob> vertexShaderBlob = dxCommon->CompileShader(L"Object3D.VS.hlsl", L"vs_6_0");
+	Microsoft::WRL::ComPtr<IDxcBlob> vertexShaderBlob = dxCommon->CompileShader(L"resources/shaders/Object3D.VS.hlsl", L"vs_6_0");
 	assert(vertexShaderBlob != nullptr);
 
-	Microsoft::WRL::ComPtr<IDxcBlob> pixelShaderBlob = dxCommon->CompileShader(L"Object3D.PS.hlsl", L"ps_6_0");
+	Microsoft::WRL::ComPtr<IDxcBlob> pixelShaderBlob = dxCommon->CompileShader(L"resources/shaders/Object3D.PS.hlsl", L"ps_6_0");
 	assert(pixelShaderBlob != nullptr);
 
 	//PSO生成
@@ -422,7 +427,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// Particle Shaderコンパイル
 	Microsoft::WRL::ComPtr<IDxcBlob> particleVertexShaderBlob =
 		dxCommon->CompileShader(
-			L"Particle.VS.hlsl",
+			L"resources/shaders/Particle.VS.hlsl",
 			L"vs_6_0"
 		);
 
@@ -430,7 +435,7 @@ int WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	Microsoft::WRL::ComPtr<IDxcBlob> particlePixelShaderBlob =
 		dxCommon->CompileShader(
-			L"Particle.PS.hlsl",
+			L"resources/shaders/Particle.PS.hlsl",
 			L"ps_6_0"
 		);
 
