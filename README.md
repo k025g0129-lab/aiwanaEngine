@@ -1,0 +1,1 @@
+[![.github/workflows/DebugBuild.yml](https://github.com/k025g0129-lab/aiwanaEngine/actions/workflows/DebugBuild.yml/badge.svg)](https://github.com/k025g0129-lab/aiwanaEngine/actions/workflows/DebugBuild.yml)
